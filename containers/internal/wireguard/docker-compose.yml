@@ -1,0 +1,86 @@
+version: "3.8"
+
+networks:
+  # web:
+  #   external: true
+  vpn:
+    external: true
+
+volumes:
+  wireguard:
+  wg-portal:
+
+# Thanks to https://github.com/BaptisteBdn/docker-selfhosted-apps/tree/main/wireguard-pihole-unbound
+services:
+  wireguard:
+    image: linuxserver/wireguard:1.0.20210914
+    container_name: wireguard
+    restart: unless-stopped
+    
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Toronto
+      - SERVERPORT=51820
+      - SERVERURL=picco.li
+      # How many peers to generate for you (clients). 0 Because we generate peers through the GUI
+      - PEERS=0
+      - PEERDNS=172.20.0.11 # Set it to point to pihole
+      - INTERNAL_SUBNET=10.6.0.0
+      - ALLOWEDIPS=172.20.0.0/16,0.0.0.0/0
+
+      # WG-portal env vars
+      - WG_DEVICES=wg0
+      - WG_DEFAULT_DEVICE=wg0
+      - WG_CONFIG_PATH=/config
+      # Core Settings
+      - EXTERNAL_URL=http://wg.internal
+      - WEBSITE_TITLE=WireGuard VPN
+      - DATABASE_NAME=/portal-data/wg_portal.db
+    env_file:
+      - .env
+    volumes:
+      # Where all the keys and other sensitive data is stored
+      - wireguard:/config
+      # Needs to have access to this so wireguard can be installed in the kernel. Wireguard runs at the kernel level that's why
+      # it can be so fast
+      - /lib/modules:/lib/modules
+      # From https://www.linuxserver.io/blog/2019-09-14-customizing-our-containers
+      # The next two volumes are scripts that run at different points of the container lifecycle (see link above)
+      - ./custom-cont-init.d/:/custom-cont-init.d/
+      - ./custom-services.d/:/custom-services.d/
+      - wg-portal:/portal-data
+    ports:
+      # Connections to wireguard don't go through Traefik (reverse proxy). This is because I don't see a reason why and also I don't want
+      # to kill the client connnections if Traefik goes down. For this reason we have to expose this door
+      - "51820:51820/udp"
+      # We use custom scripts to run wg-api inside this container. It's an API that gives stats about clients and connections. For this reason
+      # we expose this door so the UI can consume this api
+      - 8123:8123
+    dns:
+      # Points to pihole. So every wireguard request will go through pihole for DNS resolution which will block some unwanted domains
+      - 172.20.0.11
+    # I'd be lying if I said why we have to set this, but I believe it's so wireguard can properly route requests
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.disable_ipv6=0
+    networks:
+      # web:
+      #   # We give it a static IP so we can change our IPTables to only allow requests on port 51820 to wireguard
+      #   ipv4_address: 172.20.0.12
+      vpn:
+        ipv4_address: 172.40.0.12
+
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.http.routers.wg-portal.rule=Host(`wg.picco.li`)
+    #   - traefik.http.routers.wg-portal.tls=true
+    #   - traefik.http.routers.wg-portal.tls.certresolver=lets-encrypt
+    #   - traefik.http.services.wg-portal.loadbalancer.server.port=8123
+    #   # Don't really trust the authentication process of this repo since it's small. So I put authelia in front of it
+    #   - traefik.http.routers.wg-portal.middlewares=authelia-auth@docker
+    #   - traefik.port=8123
+  

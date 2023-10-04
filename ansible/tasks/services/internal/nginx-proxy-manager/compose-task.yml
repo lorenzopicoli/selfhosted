@@ -1,0 +1,44 @@
+---
+- name: Start nginx-proxy-manager container
+  community.docker.docker_compose:
+    project_name: npm
+    build: true
+    definition:
+      version: "3.8"
+      networks:
+        vpn:
+          external: true
+
+      volumes:
+        nginx-proxy-manager-data:
+
+      services:
+        app:
+          image: 'jc21/nginx-proxy-manager:2.10.1'
+          container_name: npm
+          restart: unless-stopped
+          ports:
+            - '443:443'
+            - '80:80'
+            # Admin dashboard. We reverse proxy to the dashboard, but in case
+            # it stops working, we can still access it directly.
+            - '81:81'
+          volumes:
+            - nginx-proxy-manager-data:/data
+          dns:
+            - 172.40.0.11
+          networks:
+            vpn:
+              ipv4_address: 172.40.0.10
+              aliases:
+                - finance.internal
+                - finance.importer.internal
+
+  register: output
+
+- ansible.builtin.debug:
+    var: output
+
+- ansible.builtin.assert:
+    that:
+      - "output.services.app.npm.state.running"

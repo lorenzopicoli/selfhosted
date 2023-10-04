@@ -1,0 +1,49 @@
+server:
+  host: 0.0.0.0
+  port: 9091
+log:
+  level: debug
+theme: dark
+default_redirection_url: https://auth.picco.li
+totp:
+  issuer: authelia.com
+
+authentication_backend:
+  password_reset:
+    disable: false
+    custom_url: ""
+  file:
+    path: /config/users_database.yml
+    password:
+      algorithm: argon2id
+      iterations: 1
+      salt_length: 16
+      parallelism: 8
+      memory: 64
+      
+access_control:
+  default_policy: deny
+  rules:
+    - domain: "home.picco.li"
+      policy: one_factor
+    # Rules applied to everyone
+    - domain: "*.picco.li"
+      policy: two_factor
+
+session:
+  name: authelia_session
+  expiration: 18000  # 5 hours
+  inactivity: 7200  # 2 hours
+  domain: picco.li  # Should match whatever your root protected domain is
+
+regulation:
+  max_retries: 3
+  find_time: 120
+  ban_time: 300
+
+storage:
+  local:
+    path: /data/sqlite/db.sqlite3
+
+notifier:
+  disable_startup_check: false

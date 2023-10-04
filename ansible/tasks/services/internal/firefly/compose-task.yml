@@ -1,0 +1,91 @@
+---
+- name: Copy file with owner and permissions
+  ansible.builtin.copy:
+    src: ./configs/
+    dest: /home/lorenzo/configs/firefly/
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
+- name: Start Firefly container
+  community.docker.docker_compose:
+    project_name: firefly
+    build: true
+    definition:
+      version: '3.8'
+
+      volumes:
+        firefly_iii_upload:
+        firefly_iii_db:
+        firefly_iii_importer_import:
+
+      networks:
+        internal:
+          external: false
+
+      services:
+        firefly:
+          image: fireflyiii/core:latest
+          restart: always
+          container_name: firefly
+          volumes:
+            - firefly_iii_upload:/var/www/html/storage/upload
+          environment:
+            - APP_DEBUG="{{ FIREFLY_APP_DEBUG }}"
+            - SITE_OWNER="{{ FIREFLY_SITE_OWNER }}"
+            - APP_KEY="{{ FIREFLY_APP_KEY }}"
+            - TZ="{{ FIREFLY_TZ }}"
+            - TRUSTED_PROXIES="{{ FIREFLY_TRUSTED_PROXIES }}"
+            - DB_CONNECTION="{{ FIREFLY_DB_CONNECTION }}"
+            - DB_HOST="{{ FIREFLY_DB_HOST }}"
+            - DB_PORT="{{ FIREFLY_DB_PORT }}"
+            - DB_DATABASE="{{ FIREFLY_DB_DATABASE }}"
+            - DB_USERNAME="{{ FIREFLY_DB_USERNAME }}"
+            - DB_PASSWORD="{{ FIREFLY_DB_PASSWORD }}"
+            # - PASSPORT_PRIVATE_KEY="{{ FIREFLY_PASSPORT_PRIVATE_KEY }}"
+            # - PASSPORT_PUBLIC_KEY="{{ FIREFLY_PASSPORT_PUBLIC_KEY }}"
+            - APP_URL="{{ FIREFLY_APP_URL }}"
+          ports:
+            - 80:8080
+          depends_on:
+            - db
+        db:
+          image: mariadb    
+          hostname: fireflyiiidb
+          restart: always
+          environment:
+            - MYSQL_RANDOM_ROOT_PASSWORD="{{ FIREFLY_MYSQL_RANDOM_ROOT_PASSWORD }}"
+            - MYSQL_USER="{{ FIREFLY_MYSQL_USER }}"
+            - MYSQL_PASSWORD="{{ FIREFLY_MYSQL_PASSWORD }}"
+            - MYSQL_DATABASE="{{ FIREFLY_MYSQL_DATABASE }}"
+          volumes:
+            - firefly_iii_db:/var/lib/mysql
+        importer:
+          image: fireflyiii/data-importer:latest
+          container_name: firefly-importer
+          restart: always
+          ports:
+            - 81:8080
+          depends_on:
+            - firefly
+          environment:
+            - FIREFLY_III_URL="{{ FIREFLY_FIREFLY_III_URL }}"
+            - VANITY_URL="{{ FIREFLY_VANITY_URL }}"
+            - IGNORE_DUPLICATE_ERRORS="{{ FIREFLY_IGNORE_DUPLICATE_ERRORS }}"
+            - AUTO_IMPORT_SECRET="{{ FIREFLY_AUTO_IMPORT_SECRET }}"
+            - FIREFLY_III_ACCESS_TOKEN="{{ FIREFLY_FIREFLY_III_ACCESS_TOKEN }}"
+            - CAN_POST_AUTOIMPORT="{{ FIREFLY_CAN_POST_AUTOIMPORT }}"
+            - CAN_POST_FILES="{{ FIREFLY_CAN_POST_FILES }}"
+            - IMPORT_DIR_ALLOWLIST="{{ FIREFLY_IMPORT_DIR_ALLOWLIST }}"
+            - APP_NAME="{{ FIREFLY_APP_NAME }}"
+          volumes:
+            - '/home/lorenzo/configs/firefly/import:/tmp/import'
+
+  register: output
+
+- ansible.builtin.debug:
+    var: output
+
+- ansible.builtin.assert:
+    that:
+      - "output.services.firefly.firefly.state.running"

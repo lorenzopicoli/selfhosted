@@ -1,0 +1,34 @@
+version: '3'
+
+networks:
+  web:
+    external: true
+
+
+version: "3"
+services:
+  watchtower:
+    image: containrrr/watchtower:1.5.3
+    environment:
+      - WATCHTOWER_NOTIFICATION_EMAIL_FROM=lorenzo@picco.li
+      - WATCHTOWER_NOTIFICATION_EMAIL_TO=lorenzo@picco.li
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=mail.privateemail.com
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_TLS_SKIP_VERIFY=false
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=587
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=lorenzo@picco.li
+      - WATCHTOWER_NOTIFICATION_EMAIL_DELAY=2
+      - WATCHTOWER_NOTIFICATIONS=email
+      - WATCHTOWER_MONITOR_ONLY=true
+    env_file:
+      - .env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - web
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.wud.rule=Host(`wt.picco.li`)
+      - traefik.http.routers.wud.tls=true
+      - traefik.http.routers.wud.tls.certresolver=lets-encrypt
+      - traefik.http.routers.wud.middlewares=authelia-auth@docker
+      - traefik.http.services.wud-frontend.loadbalancer.server.port=3000

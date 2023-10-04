@@ -1,0 +1,8 @@
+# [http.routers.api]
+#   rule = "Host(`rp.picco.li`)"
+#   entrypoints = ["websecure"]
+#   middlewares = ["authelia-auth@docker"]
+#   service = "api@internal"
+#   [http.routers.api.tls]
+#     certResolver = "lets-encrypt"
+

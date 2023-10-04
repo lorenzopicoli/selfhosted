@@ -1,0 +1,36 @@
+---
+- name: Ensure git installed
+  apt:
+    name: git
+    state: present
+    update_cache: true
+  become: true
+- name: Ensure Pip is installed.
+  apt:
+    name:  python3-pip
+    state: present
+- name: Install pexpect
+  pip:
+    name: pexpect
+  become: true
+- name: Create remote SSH directory
+  file:
+    path: "{{ server_ssh_dir }}"
+    state: directory
+
+- name: Copy private SSH key to remote server
+  copy:
+    src: "{{ local_gh_keypair }}"
+    dest: "{{ server_sshkey }}"
+    mode: '0600'
+- name: Copy public SSH key to remote server
+  copy:
+    src: "{{ local_gh_keypair }}.pub"
+    dest: "{{ server_sshkey }}.pub"
+    mode: '0644'
+- name: Checkout selfhosted git repo
+  git:
+    repo: "{{ repo }}"
+    dest: "{{ dest }}"
+    key_file: "{{ server_sshkey }}"
+    accept_hostkey: true

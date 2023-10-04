@@ -1,0 +1,60 @@
+---
+- name: Start vaultwarden container
+  community.docker.docker_compose:
+    project_name: vaultwarden
+    build: true
+    definition:
+      version: '3.8'
+
+      volumes:
+        vaultwarden:
+
+      services:
+        vaultwarden:
+          image: vaultwarden/server:1.28.1-alpine
+          container_name: vaultwarden
+          restart: unless-stopped
+          volumes:
+            - vaultwarden:/data
+          ports:
+            - '3012:3012'
+            - '80:80'
+          environment:
+            - "WEBSOCKET_ENABLED={{ VAULTWARDEN_WEBSOCKET_ENABLED }}"
+            - "ORG_EVENTS_ENABLED={{ VAULTWARDEN_ORG_EVENTS_ENABLED }}"
+            - "EVENTS_DAYS_RETAIN={{ VAULTWARDEN_EVENTS_DAYS_RETAIN }}"
+            - "SIGNUPS_ALLOWED={{ VAULTWARDEN_SIGNUPS_ALLOWED }}"
+            - "SIGNUPS_VERIFY={{ VAULTWARDEN_SIGNUPS_VERIFY }}"
+            - "PASSWORD_HINTS_ALLOWED={{ VAULTWARDEN_PASSWORD_HINTS_ALLOWED }}"
+            - "DOMAIN={{ VAULTWARDEN_DOMAIN }}"
+            - "SMTP_HOST={{ VAULTWARDEN_SMTP_HOST }}"
+            - "SMTP_FROM={{ VAULTWARDEN_SMTP_FROM }}"
+            - "SMTP_FROM_NAME={{ VAULTWARDEN_SMTP_FROM_NAME }}"
+            - "SMTP_PORT={{ VAULTWARDEN_SMTP_PORT }}"
+            - "SMTP_USERNAME={{ VAULTWARDEN_SMTP_USERNAME }}"
+            - "SMTP_PASSWORD={{ VAULTWARDEN_SMTP_PASSWORD }}"
+            - "SMTP_TIMEOUT={{ VAULTWARDEN_SMTP_TIMEOUT }}"
+
+          # labels:
+          #   - traefik.enable=true
+          #   - traefik.http.routers.vaultwarden.rule=Host(`pass.picco.li`)
+          #   - traefik.http.routers.vaultwarden.tls=true
+          #   - traefik.http.routers.vaultwarden.tls.certresolver=lets-encrypt
+          #   - traefik.http.services.vaultwarden.loadbalancer.server.port=80
+          #   - traefik.http.routers.vaultwarden.service=vaultwarden
+
+          #   - traefik.http.routers.vaultwarden-notif.rule=Host(`pass.picco.li`) && PathPrefix(`/notifications/hub/`)
+          #   - traefik.http.routers.vaultwarden-notif.tls=true
+          #   - traefik.http.routers.vaultwarden-notif.tls.certresolver=lets-encrypt
+          #   - traefik.http.services.vaultwarden-notif.loadbalancer.server.port=3012
+          #   - traefik.http.routers.vaultwarden-notif.service=vaultwarden-notif
+
+
+  register: output
+
+- ansible.builtin.debug:
+    var: output
+
+- ansible.builtin.assert:
+    that:
+      - "output.services.vaultwarden.vaultwarden.state.running"

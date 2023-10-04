@@ -1,0 +1,39 @@
+---
+homelab:
+  hosts:
+    raspberrypi:
+      ansible_host: 192.168.20.3
+      ansible_user: lorenzo
+      ansible_architecture: arm
+      ansible_distribution: debian
+    radioactive:
+      ansible_host: 192.168.20.5
+      ansible_user: lorenzo
+      ansible_architecture: amd64
+      ansible_distribution: debian
+      
+    gatekeeper:
+      ansible_host: 192.168.40.2
+      ansible_user: lorenzo
+      ansible_architecture: amd64
+      ansible_distribution: debian
+    obsidian:
+      ansible_host: 192.168.40.18
+      ansible_user: lorenzo
+      ansible_architecture: amd64
+      ansible_distribution: debian
+    treasury:
+      ansible_host: 192.168.40.17
+      ansible_user: lorenzo
+      ansible_architecture: amd64
+      ansible_distribution: debian
+    confidant:
+      ansible_host: 192.168.40.19
+      ansible_user: lorenzo
+      ansible_architecture: amd64
+      ansible_distribution: debian
+    nbarr:
+      ansible_host: 192.168.40.21
+      ansible_user: lorenzo
+      ansible_architecture: amd64
+      ansible_distribution: debian

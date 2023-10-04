@@ -1,0 +1,62 @@
+# This is based on this article: 
+# https://www.digitalocean.com/community/tutorials/how-to-use-ansible-to-automate-initial-server-setup-on-ubuntu-22-04#step-8-reviewing-your-complete-playbook
+---
+
+- name: Install aptitude
+  apt:
+    name: aptitude
+    state: latest
+    update_cache: true
+
+- name: Setup passwordless sudo
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^%sudo'
+    line: '%sudo ALL=(ALL) NOPASSWD: ALL'
+    validate: '/usr/sbin/visudo -cf %s'
+
+- name: Create a new regular user with sudo privileges
+  user:
+    name: "{{ username }}"
+    state: present
+    groups: sudo
+    append: true
+    create_home: true
+
+- name: Set authorized key for remote user
+  ansible.posix.authorized_key:
+    user: "{{ username }}"
+    state: present
+    key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+
+# Effectively disables even the user used to do the initial login. Only SSH allowed
+- name: Disable Password Authentication
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^PasswordAuthentication'
+    line: "PasswordAuthentication no"
+    state: present
+    backup: yes
+
+- name: Disable authentication for root
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    state: present
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin no'
+
+- name: Update apt and install required system packages
+  apt:
+    pkg:
+      - curl
+      - vim
+      - git
+    state: latest
+    update_cache: true
+  # # If something changed, restart the ssh service. Without this changes wouldn't apply
+  # handlers:
+  #  - name: restart ssh
+  #    service:
+  #      name=sshd
+  #      state=restarted

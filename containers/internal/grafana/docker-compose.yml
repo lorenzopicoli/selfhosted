@@ -1,0 +1,41 @@
+version: "3.8"
+
+networks:
+  # Web network is the network that is open to the internet. It already exists hence `external: true`.
+  # Grafana has a dashboard that I make accessible online
+  web:
+    external: true
+  # Grafana talks to influx. There's no reason to open influx to the internet so we create a new netowrk
+  grafana_sources:
+    external: true
+
+  vpn:
+    external: true
+
+volumes:
+  grafana_data: {}
+  
+services:
+  grafana:
+    image: grafana/grafana:main
+    container_name: grafana
+    hostname: grafana
+    restart: unless-stopped
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana.ini:/etc/grafana/grafana.ini
+    # ports:
+    #   - 3000:3000
+    environment:
+      - GF_INSTALL_PLUGINS=yesoreyeram-boomtheme-panel
+      - GF_SERVER_ROOT_URL=http://grafana.picco.li
+    # labels:
+      # - traefik.enable=true
+      # - traefik.http.routers.grafana.rule=Host(`grafana.picco.li`)
+      # - traefik.http.routers.grafana.tls=true
+      # - traefik.http.routers.grafana.tls.certresolver=lets-encrypt
+      # - traefik.port=3000
+    networks:
+      # - web
+      - grafana_sources
+      - vpn

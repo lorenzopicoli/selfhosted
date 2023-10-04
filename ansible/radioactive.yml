@@ -1,0 +1,28 @@
+- name: Setup radioactive
+  hosts:
+    - radioactive
+  become: true
+  vars:
+    username: lorenzo
+    device_type: normal
+  vars_files:
+    - env_vars.yml
+
+  tasks:
+    - name: Update server and install essential packages
+      ansible.builtin.include_tasks: tasks/ssh.yml
+
+    - name: Setup linux firewall
+      ansible.builtin.include_tasks: tasks/firewall.yml
+
+    - name: Install docker
+      ansible.builtin.include_tasks: tasks/docker.yml
+    
+    - name: Install docker compose
+      ansible.builtin.include_tasks: tasks/install-compose.yml
+    
+    - name: Deploy gatekeeper docker apps
+      ansible.builtin.include_tasks: "tasks/services/external/{{ item }}/compose-task.yml"
+      loop:
+        - spotify-mongo
+    

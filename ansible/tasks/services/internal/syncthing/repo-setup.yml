@@ -1,0 +1,58 @@
+---
+- name: Create lobsidian repo directory
+  file:
+    path: "/home/lorenzo/lobsidian"
+    state: directory
+  become_user: lorenzo
+  become: true
+
+- name: Ensure git installed
+  apt:
+    name: git
+    state: present
+    update_cache: true
+  become: true
+
+- name: Create remote SSH directory
+  file:
+    path: "/home/lorenzo/.ssh"
+    state: directory
+
+- name: Copy private SSH key to remote server
+  copy:
+    src: "/home/lorenzo/.ssh/lobsidian_rsa"
+    dest: "/home/lorenzo/.ssh/id_rsa"
+    mode: '0600'
+  become_user: lorenzo
+  become: true
+- name: Copy public SSH key to remote server
+  copy:
+    src: "/home/lorenzo/.ssh/lobsidian_rsa.pub"
+    dest: "/home/lorenzo/.ssh/id_rsa.pub"
+    mode: '0644'
+  become_user: lorenzo
+  become: true
+- name: Checkout lobsidian git repo
+  git:
+    repo: "git@github.com:lorenzopicoli/lobsidian.git"
+    dest: "/home/lorenzo/lobsidian"
+    key_file: "/home/lorenzo/.ssh/id_rsa"
+    accept_hostkey: true
+  become_user: lorenzo
+  become: true
+
+- name: Make update git global email
+  community.general.git_config:
+    name: user.email
+    scope: global
+    value: 'lorenzo@picco.li'
+  become_user: lorenzo
+  become: true
+
+- name: Make update git global name
+  community.general.git_config:
+    name: user.name
+    scope: global
+    value: 'Automatic cron'
+  become_user: lorenzo
+  become: true

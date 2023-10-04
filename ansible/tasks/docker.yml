@@ -1,0 +1,58 @@
+---
+# ====== General ======
+- name: Check if Docker is already present.
+  command: which docker
+  failed_when: false
+  changed_when: false
+  check_mode: false
+  register: docker_command_result
+  
+
+# ====== Docker ====== install for normal computers
+- name: Install aptitude
+  apt:
+    name: aptitude
+    state: latest
+    update_cache: true
+  when: "docker_command_result.rc == 1"
+
+- name: Install required system packages
+  apt:
+    pkg:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+      - python3-pip
+      - virtualenv
+      - python3-setuptools
+    state: latest
+    update_cache: true
+  when: "docker_command_result.rc == 1"
+
+- name: Add Docker GPG apt Key
+  apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+    state: present
+  when: "docker_command_result.rc == 1"
+
+- name: Add Docker Repository
+  apt_repository:
+    repo: "deb https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+    state: present
+  when: "docker_command_result.rc == 1"
+
+- name: Update apt and install docker-ce
+  apt:
+    name: docker-ce
+    state: latest
+    update_cache: true
+  when: "docker_command_result.rc == 1"
+
+- name: Install Docker Module for Python
+  pip:
+    name: docker
+  when: "docker_command_result.rc == 1"
+
+
+

@@ -1,0 +1,32 @@
+version: '3.8'
+
+networks:
+  vpn:
+    external: true
+  internal:
+    external: false
+
+volumes:
+  portainer_data:
+
+services:
+  portainer-ce:
+    image: portainer/portainer-ce:2.17.1-alpine
+    container_name: portainer
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
+    networks:
+      - internal
+      - vpn
+  agent:
+    image: 'portainer/agent:2.17.1-alpine'
+    container_name: portainer_agent
+    restart: always
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - '/var/lib/docker/volumes:/var/lib/docker/volumes'
+    networks:
+      - internal

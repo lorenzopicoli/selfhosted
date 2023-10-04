@@ -1,0 +1,49 @@
+---
+- name: Start pihole container
+  community.docker.docker_compose:
+    project_name: pihole
+    build: true
+    definition:
+      version: "3.8"
+      networks:
+        vpn:
+          external: true
+
+      volumes:
+        pihole_etc:
+        pihole_dnsmasq:
+
+      services:
+        pihole:
+          container_name: pihole
+          image: pihole/pihole:2023.03.1
+          restart: unless-stopped
+          # Needed otherwise pihole will not be able to resolve domains.
+          # So for example I couldn't run apt install inside the container without
+          # this
+          dns:
+            - 127.0.0.1
+          ports:
+            # Dashboard is accessed through the reverse proxy on dns.internal.
+            # But if the reverse proxy or DNS resolution is down I still can
+            # access the dashboard directly through this port
+            - 8081:80
+            - 53:53/tcp
+            - 53:53/udp
+          environment:
+            TZ: America/Toronto
+            WEBPASSWORD: "{{ PIHOLE_WEBPASSWORD }}"
+          volumes:
+            - pihole_etc:/etc/pihole/
+            - pihole_dnsmasq:/etc/dnsmasq.d/
+          networks:
+            vpn:
+              ipv4_address: 172.40.0.11
+  register: output
+
+- ansible.builtin.debug:
+    var: output
+
+- ansible.builtin.assert:
+    that:
+      - "output.services.pihole.pihole.state.running"

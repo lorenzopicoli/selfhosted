@@ -1,0 +1,50 @@
+---
+- name: Start unifi controller container
+  community.docker.docker_compose:
+    project_name: unifi_controller
+    build: true
+    definition:
+      version: "3.8"
+      networks:
+        vpn:
+          external: true
+
+      volumes:
+        unifi-data:
+
+      services:
+        unifi_controller:
+          image: lscr.io/linuxserver/unifi-controller:7.3.83
+          container_name: unifi_controller
+          environment:
+            - PUID=1000
+            - PGID=1000
+            - TZ=Etc/UTC
+          volumes:
+            - unifi-data:/config
+
+          networks:
+            vpn:
+
+          ports:
+            # Unifi web admin port
+            - 8443:8443
+            # Unifi STUN port
+            - 3478:3478/udp
+            # Required for AP discovery
+            - 10001:10001/udp
+            # Required for device communication
+            - 8080:8080
+            # Required for Make controller discoverable on L2 network option
+            - 1900:1900/udp
+            - 6789:6789
+          restart: unless-stopped
+  register: output
+
+
+- ansible.builtin.debug:
+    var: output
+
+- ansible.builtin.assert:
+    that:
+      - output.services.unifi_controller.unifi_controller.state.running

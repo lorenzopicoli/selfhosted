@@ -1,0 +1,13 @@
+- name: Copy cron script with owner and permissions
+  ansible.builtin.copy:
+    src: ./configs/
+    dest: /home/lorenzo/configs/
+    owner: lorenzo
+    mode: a+x
+
+- name: Lobsidian github sync cron job
+  ansible.builtin.cron:
+    name: "Lobsidian github sync cron job"
+    minute: "*/5"
+    job: "bash /home/lorenzo/configs/sync-with-gh.sh"
+    user: lorenzo

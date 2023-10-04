@@ -1,0 +1,39 @@
+[entryPoints]
+  [entryPoints.web]
+    address = ":80"
+    [entryPoints.web.http.redirections.entryPoint]
+      to = "websecure"
+      scheme = "https"
+
+  [entryPoints.websecure]
+    address = ":443"
+    [entryPoints.websecure.forwardedHeaders]
+      trustedIPs="10.0.0.0/8,172.16.0.0/16,192.168.0.0/16,172.20.0.0/16"
+    [entryPoints.websecure.proxyProtocol]
+      trustedIPs="10.0.0.0/8,172.16.0.0/16,192.168.0.0/16,172.20.0.0/16"
+
+[api]
+  dashboard = true
+
+[certificatesResolvers.lets-encrypt.acme]
+  email = "lorenzo@picco.li"
+  storage = "/acme/acme.json"
+  [certificatesResolvers.lets-encrypt.acme.dnschallenge]
+    provider = "namecheap"
+    # Would get stuck in a "Waiting for DNS record propagation.Waiting for DNS record propagation" loop
+    # without this
+    resolvers = ["1.1.1.1:53", "8.8.8.8:53", "dns1.registrar-servers.com:53","dns2.registrar-servers.com:53"]
+    delayBeforeCheck = "5"
+
+[providers.docker]
+  exposedByDefault = false
+  watch = true
+  network = "web"
+
+[providers.file]
+  filename = "traefik_dynamic.toml"
+
+[log]
+  level = "DEBUG"
+
+[accessLog]

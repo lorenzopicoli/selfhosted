@@ -1,0 +1,17 @@
+# ====== General ======
+- name: Ensure Pip is installed.
+  package:
+    name:  python3-pip
+    state: present
+
+- name: Install Docker Compose using Pip.
+  pip:
+    name: docker-compose
+    state: present
+    executable: pip3
+
+- name: Ensure Docker is started.
+  service:
+    name: docker
+    state: started
+    enabled: true

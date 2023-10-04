@@ -1,0 +1,53 @@
+---
+- name: Start ddns_updater container
+  community.docker.docker_compose:
+    project_name: ddns_updater
+    build: true
+    definition:
+      version: "3.8"
+      networks:
+        vpn:
+          external: true
+      services:
+        ddns_updater:
+          image: qmcgaw/ddns-updater
+          container_name: ddns_updater
+          dns:
+            - 172.40.0.11
+          ports:
+            - 8000:8000/tcp
+          environment:
+            - "CONFIG={{ DDNS_UPDATER_CONFIG }}"
+            - PERIOD=5m
+            - UPDATE_COOLDOWN_PERIOD=5m
+            - PUBLICIP_FETCHERS=all
+            - PUBLICIP_HTTP_PROVIDERS=all
+            - PUBLICIPV4_HTTP_PROVIDERS=all
+            - PUBLICIPV6_HTTP_PROVIDERS=all
+            - PUBLICIP_DNS_PROVIDERS=all
+            - PUBLICIP_DNS_TIMEOUT=3s
+            - HTTP_TIMEOUT=10s
+
+            # Web UI
+            - LISTENING_PORT=8000
+            - ROOT_URL=/
+
+            # Backup
+            - BACKUP_PERIOD=0 # 0 to disable
+
+            # Other
+            - LOG_LEVEL=info
+            - LOG_CALLER=hidden
+          networks:
+            vpn:
+          restart: always
+
+  register: output
+
+- ansible.builtin.debug:
+    var: output
+
+- ansible.builtin.assert:
+    that:
+      - "output.services.ddns_updater.ddns_updater.state.running"
+

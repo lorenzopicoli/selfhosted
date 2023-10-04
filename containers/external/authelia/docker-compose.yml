@@ -1,0 +1,39 @@
+version: "3.8"
+
+networks:
+  # Web network is the network that is open to the internet. It already exists hence `external: true`.
+  # Authelia must be open to the internet so it can show the login page
+  web:
+    external: true
+
+volumes:
+  authelia:
+
+services:
+  authelia:
+    container_name: authelia
+    image: authelia/authelia:4.37.5
+    restart: unless-stopped
+    networks:
+      - web
+    volumes:
+      - ./config:/config
+      # Not really sure we need to store have this volume. Need to
+      # research on authelia statefulness
+      - authelia:/data/sqlite
+    env_file:
+      - .env
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.authelia.rule=Host(`auth.picco.li`)
+      - traefik.http.routers.authelia.entryPoints=websecure
+      - traefik.http.routers.authelia.tls=true
+
+      # Tells traefik that authelia handles authentication https://doc.traefik.io/traefik/middlewares/http/forwardauth/
+      - traefik.http.middlewares.authelia.forwardAuth.address=http://authelia:9091/api/verify?rd=https%3A%2F%2Fauth.picco.li%2F
+      - traefik.http.middlewares.authelia.forwardAuth.trustForwardHeader=true
+      - traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email
+      # Tells traefik that authelia handles authentication https://doc.traefik.io/traefik/middlewares/http/forwardauth/
+      - traefik.http.middlewares.authelia-auth.forwardAuth.address=http://authelia:9091/api/verify?rd=https://auth.picco.li
+      - traefik.http.middlewares.authelia-auth.forwardAuth.trustForwardHeader=true
+      - traefik.http.middlewares.authelia-auth.forwardAuth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email

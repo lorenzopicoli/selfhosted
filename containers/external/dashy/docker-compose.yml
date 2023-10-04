@@ -1,0 +1,28 @@
+version: '3.8'
+
+networks:
+  # Web network is the network that is open to the internet. It already exists hence `external: true`.
+  # This service is open to the internet
+  web:
+    external: true
+
+services:
+  dashy:
+    image: lissy93/dashy:2.1.1
+    container_name: Dashy
+    volumes:
+      - ./config.yml:/app/public/conf.yml
+      - ./icons/:/app/public/item-icons/
+    environment:
+      - NODE_ENV=production
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.dashy.rule=Host(`home.picco.li`)
+      - traefik.http.routers.dashy.tls=true
+      - traefik.http.routers.dashy.tls.certresolver=lets-encrypt
+      # Protect this webpage
+      - traefik.http.routers.dashy.middlewares=authelia-auth@docker
+      - traefik.port=80
+    networks:
+      - web
+    restart: unless-stopped
