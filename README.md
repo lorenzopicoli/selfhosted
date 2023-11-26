@@ -1,3 +1,25 @@
+
+| Name             | Container/VM | Version   | Last update  | Type      | Status     | Notes                                                                                                      |
+| ---------------- | ------------ | --------- | ------------ | --------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
+| Firefly          | Treasury     | latest    |              | Container | Deprecated |                                                                                                            |
+| FireflyDB        | Treasury     | latest    |              | Container | Deprecated |                                                                                                            |
+| FireflyImporter  | Treasury     | latest    |              | Container | Deprecated |                                                                                                            |
+| NBarr            | NBarr        | latest    |              | Container | Deprecated |                                                                                                            |
+| Vaultwarden      | Confidant    | 1.30.1    | Nov 11, 2023 | Container | Needs work | Need to update encryption type. Log in and go to account details, security and keys. Enable KDF algorithm |
+| Unifi controller | Gatekeeper   | 8.0.7     | Nov 11, 2023 | VM        | Needs work | [Image moved (read og image message)](https://github.com/linuxserver/docker-unifi-network-application)     |
+| Traefik          | RaspberryPi  | 2.10.5    | Nov 11, 2023 | Container | Needs work | v3 is out. Need to update                                                                                  |
+| Syncthing        | Obsidian     | 1.26.1    | Nov 11, 2023 | Container | Working    | Updating with Ansible will show an error, but it's fine                                                    |
+| Pihole           | Gatekeeper   | 2023.11.0 | Nov 11, 2023 | VM        | Working    |                                                                                                            |
+| NPM              | Gatekeepr    | 2.10.4    | Nov 11, 2023 | VM        | Working    |                                                                                                            |
+| DDNS updater     | Gatekeeper   | v2.5.0    | Nov 11, 2023 | VM        | Working    |                                                                                                            |
+| Spotify-Mongo    | Radioactive  | 6.0.5     |              | Container | Working    | Can't update because of Raspberry Pi's architecture                                                        |
+| Spotify Server   | RaspberryPi  | 1.7.3     | Nov 11, 2023 | Container | Working    |                                                                                                            |
+| Spotify Client   | RaspberryPi  | 1.7.3     | Nov 11, 2023 | Container | Working    |                                                                                                            |
+
+
+
+
+
 Most of the magic happens over /ansible.
 
 My current homelab consists of:
@@ -13,9 +35,9 @@ My current homelab consists of:
   - Workstation
     - AMD Ryzen 588X
     - GTX 1060 3GB
-    - 32GB DDR4
-    - 2 500GB SSDs (one for Linux one for Windows)
-
+    - 64GB DDR4
+    - 1 500GB SSD (Linux)
+    - 1TB M2 SSD (Windows)
 ## ISP
 
 - 500mb fiber connection
