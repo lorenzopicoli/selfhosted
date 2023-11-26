@@ -8,7 +8,8 @@
 - name: UFW - Allow SSH connections
   community.general.ufw:
     rule: allow
-    name: OpenSSH
+    port: 22
+    proto: tcp
 
 - name: UFW - Enable and deny by default
   community.general.ufw:

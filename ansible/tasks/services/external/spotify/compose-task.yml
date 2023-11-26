@@ -17,7 +17,7 @@
 
       services:
         server:
-          image: yooooomi/your_spotify_server:nightly
+          image: yooooomi/your_spotify_server:1.7.3
           restart: unless-stopped
 
           networks:
@@ -37,7 +37,7 @@
             - traefik.http.services.api-spotify.loadbalancer.server.port=8080
 
         web:
-          image: yooooomi/your_spotify_client:nightly
+          image: yooooomi/your_spotify_client:1.7.3
           restart: unless-stopped
           networks:
             - web

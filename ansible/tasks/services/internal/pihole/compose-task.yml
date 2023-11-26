@@ -16,7 +16,7 @@
       services:
         pihole:
           container_name: pihole
-          image: pihole/pihole:2023.03.1
+          image: pihole/pihole:2023.11.0
           restart: unless-stopped
           # Needed otherwise pihole will not be able to resolve domains.
           # So for example I couldn't run apt install inside the container without

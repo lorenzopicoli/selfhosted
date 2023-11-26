@@ -14,7 +14,7 @@
 
       services:
         unifi_controller:
-          image: lscr.io/linuxserver/unifi-controller:7.3.83
+          image: lscr.io/linuxserver/unifi-controller:8.0.7
           container_name: unifi_controller
           environment:
             - PUID=1000

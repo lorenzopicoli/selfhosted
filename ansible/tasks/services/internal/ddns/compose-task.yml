@@ -10,7 +10,7 @@
           external: true
       services:
         ddns_updater:
-          image: qmcgaw/ddns-updater
+          image: qmcgaw/ddns-updater:v2.5.0
           container_name: ddns_updater
           dns:
             - 172.40.0.11
