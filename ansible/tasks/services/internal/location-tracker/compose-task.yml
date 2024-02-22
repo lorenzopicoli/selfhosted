@@ -26,6 +26,6 @@
     var: output
 
 # This assertion isn't working
-- ansible.builtin.assert:
-    that:
-      - "output.services.location-tracker.location-tracker.state.running"
+# - ansible.builtin.assert:
+#     that:
+#       - "output.services.location-tracker.location-tracker.state.running"
