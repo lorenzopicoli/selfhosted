@@ -1,24 +1,20 @@
-
-| Name             | Container/VM | Version   | Last update  | Type      | Status     | Notes                                                                                                      |
-| ---------------- | ------------ | --------- | ------------ | --------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
-| Firefly          | Treasury     | latest    |              | Container | Deprecated |                                                                                                            |
-| FireflyDB        | Treasury     | latest    |              | Container | Deprecated |                                                                                                            |
-| FireflyImporter  | Treasury     | latest    |              | Container | Deprecated |                                                                                                            |
-| NBarr            | NBarr        | latest    |              | Container | Deprecated |                                                                                                            |
-| Vaultwarden      | Confidant    | 1.30.1    | Nov 11, 2023 | Container | Needs work | Need to update encryption type. Log in and go to account details, security and keys. Enable KDF algorithm |
-| Unifi controller | Gatekeeper   | 8.0.7     | Nov 11, 2023 | VM        | Needs work | [Image moved (read og image message)](https://github.com/linuxserver/docker-unifi-network-application)     |
-| Traefik          | RaspberryPi  | 2.10.5    | Nov 11, 2023 | Container | Needs work | v3 is out. Need to update                                                                                  |
-| Syncthing        | Obsidian     | 1.26.1    | Nov 11, 2023 | Container | Working    | Updating with Ansible will show an error, but it's fine                                                    |
-| Pihole           | Gatekeeper   | 2023.11.0 | Nov 11, 2023 | VM        | Working    |                                                                                                            |
-| NPM              | Gatekeepr    | 2.10.4    | Nov 11, 2023 | VM        | Working    |                                                                                                            |
-| DDNS updater     | Gatekeeper   | v2.5.0    | Nov 11, 2023 | VM        | Working    |                                                                                                            |
-| Spotify-Mongo    | Radioactive  | 6.0.5     |              | Container | Working    | Can't update because of Raspberry Pi's architecture                                                        |
-| Spotify Server   | RaspberryPi  | 1.7.3     | Nov 11, 2023 | Container | Working    |                                                                                                            |
-| Spotify Client   | RaspberryPi  | 1.7.3     | Nov 11, 2023 | Container | Working    |                                                                                                            |
-
-
-
-
+| Name             | Container/VM | Version   | Last update  | Type      | Status     | Notes                                                                                                                                                       |
+| ---------------- | ------------ | --------- | ------------ | --------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Firefly          | Treasury     | latest    |              | Container | Legacy     | Moved to beancount                                                                                                                                          |
+| FireflyDB        | Treasury     | latest    |              | Container | Legacy     | Moved to beancount                                                                                                                                          |
+| FireflyImporter  | Treasury     | latest    |              | Container | Legacy     | Moved to beancount                                                                                                                                          |
+| NBarr            | NBarr        | latest    |              | Container | Legacy     |                                                                                                                                                             |
+| Vaultwarden      | Confidant    | 1.30.1    | Nov 11, 2023 | Container | Needs work | Need to update encryption type. Log in and go to account details, security and keys. Enable KDF algorithm. No HyperBackup configured (missing ansible only) |
+| Unifi controller | Gatekeeper   | 8.0.7     | Nov 11, 2023 | VM        | Needs work | [Image moved (read og image message)](https://github.com/linuxserver/docker-unifi-network-application). No HyperBackup configured                           |
+| Traefik          | RaspberryPi  | 2.10.5    | Nov 11, 2023 | Container | Needs work | v3 is out. Need to update. No HyperBackup configured                                                                                                        |
+| Syncthing        | Obsidian     | 1.26.1    | Nov 11, 2023 | Container | Working    | Updating with Ansible will show an error, but it's fine. No HyperBackup configured                                                                          |
+| Pihole           | Gatekeeper   | 2023.11.0 | Nov 11, 2023 | VM        | Working    | No HyperBackup configured                                                                                                                                   |
+| NPM              | Gatekeepr    | 2.10.4    | Nov 11, 2023 | VM        | Working    | No HyperBackup configured                                                                                                                                   |
+| DDNS updater     | Gatekeeper   | v2.5.0    | Nov 11, 2023 | VM        | Deprecated | Need to clean it up. Deprecated in favour of Mikrotik DDNS                                                                                                  |
+| Spotify-Mongo    | Radioactive  | 6.0.5     |              | Container | Working    | Can't update because of Raspberry Pi's architecture                                                                                                         |
+| Spotify Server   | RaspberryPi  | 1.7.3     | Nov 11, 2023 | Container | Working    |                                                                                                                                                             |
+| Spotify Client   | RaspberryPi  | 1.7.3     | Nov 11, 2023 | Container | Working    |                                                                                                                                                             |
+| Location Tracker | RaspberryPi  | 1.7.3     | Feb 22, 2024 | Container | Working    | Read comments on Obsidian about docker compose version change and ansible. Assertion for running containers not working                                     |
 
 Most of the magic happens over /ansible.
 
@@ -38,6 +34,8 @@ My current homelab consists of:
     - 64GB DDR4
     - 1 500GB SSD (Linux)
     - 1TB M2 SSD (Windows)
+  - Synology NAS
+
 ## ISP
 
 - 500mb fiber connection
@@ -110,6 +108,18 @@ The vm list is:
     - Security group: webpage
     - Allow TCP and UDP on 3000 for the stream. Might not need UDP?
 
+- **LCX** L-Tracker: Location tracker storage and server
+
+  - Static lease of 192.168.40.27
+  - 1GB of RAM
+  - 5GB of disk
+  - VLAN tag 60
+  - Firewall
+    - Overall goal: only accessible within secure VLANs and no exposure at all
+    - Security group: secure
+    - Security group: ssh-reacheable
+    - Allow TCP on 3000 for the UI
+
 - **VM** Gatekeeper: Entrance point for all devices on the network. Contains everything from DNS server to reverse proxy to AP controller.
 
   - Static lease of 192.168.40.2
@@ -165,6 +175,8 @@ Secure and Native VLANs probably shouldn´t be treated the same, but currently t
 - ether1-WAN
 
 #### Router Firewall
+
+TODO: ADD WIREGUARD CHANGES HERE
 
 - Mikrotik firewall layer protects network primarily
   - Input chain
@@ -237,4 +249,3 @@ Router has a bridge configured as follows:
 TODO
 
 ## TODOs:
-
