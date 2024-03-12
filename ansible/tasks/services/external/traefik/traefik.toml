@@ -23,7 +23,11 @@
     # Would get stuck in a "Waiting for DNS record propagation.Waiting for DNS record propagation" loop
     # without this
     resolvers = ["1.1.1.1:53", "8.8.8.8:53", "dns1.registrar-servers.com:53","dns2.registrar-servers.com:53"]
-    delayBeforeCheck = "5"
+    delayBeforeCheck = "60"
+    # Would get stuck in a "Waiting for DNS record propagation.Waiting for DNS record propagation" loop
+    # without this
+    # Source: https://www.reddit.com/r/Actualfixes/comments/wgdd1n/fix_traefik_dns_certificate_time_limit_exceeded/
+    disablePropagationCheck = true
 
 [providers.docker]
   exposedByDefault = false

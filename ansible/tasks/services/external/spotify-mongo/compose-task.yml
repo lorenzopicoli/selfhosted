@@ -17,7 +17,8 @@
             - '27017:27017'
 
           volumes:
-            - spotify-data:/data/db
+            - /users/lorenzo/home/mongodb:/data/db
+          user: "0:0"
   register: output
 
 - ansible.builtin.debug:

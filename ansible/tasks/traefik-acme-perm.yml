@@ -1,0 +1,5 @@
+---
+
+- name: Give traefik acme proper permissions
+  ansible.builtin.shell: sudo chmod 600 /var/lib/docker/volumes/traefik_traefik/_data/acme.json
+  become: true

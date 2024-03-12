@@ -30,3 +30,8 @@
         - traefik
         - spotify
 
+    - name: Setup for Active Backup
+      ansible.builtin.include_tasks: tasks/setup-rsync-backup.yml
+    
+    - name: Setup for Traefik
+      ansible.builtin.include_tasks: tasks/traefik-acme-perm.yml
