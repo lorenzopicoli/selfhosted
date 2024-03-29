@@ -14,7 +14,8 @@
 | Spotify-Mongo    | Radioactive  | 6.0.5     |              | Container | Working    | Can't update because of Raspberry Pi's architecture                                                                                                         |
 | Spotify Server   | RaspberryPi  | 1.7.3     | Nov 11, 2023 | Container | Working    |                                                                                                                                                             |
 | Spotify Client   | RaspberryPi  | 1.7.3     | Nov 11, 2023 | Container | Working    |                                                                                                                                                             |
-| Location Tracker | RaspberryPi  | 1.7.3     | Feb 22, 2024 | Container | Working    | Read comments on Obsidian about docker compose version change and ansible. Assertion for running containers not working                                     |
+| Location Tracker | L-tracker    | In-house  | Feb 22, 2024 | Container | Working    | Read comments on Obsidian about docker compose version change and ansible. Assertion for running containers not working                                     |
+| Forgejo          | Forgejo      | 1.21      | Feb 29, 2024 | Container | Working    |                                                                                                                                                             |
 
 Most of the magic happens over /ansible.
 
@@ -58,18 +59,6 @@ All machines have a default firewall policy of accept outgoing and drop incoming
 
 The vm list is:
 
-- **LCX** Treasury: handles finance related containers
-
-  - Static lease of 192.168.40.17
-  - 512MB of RAM
-  - 10GB of disk
-  - VLAN tag 60
-  - Firewall
-    - Overall goal: only accessible within secure VLANs and no exposure at all
-    - Security group: secure
-    - Security group: ssh-reacheable
-    - Security group: webpage
-
 - **LCX** Obsidian: handles keeping obsidian in sync with github repo
 
   - Static lease of 192.168.40.18
@@ -94,19 +83,6 @@ The vm list is:
     - Security group: ssh-reacheable
     - Security group: webpage
     - Allow TCP on 3012 for notifications I believe
-
-- **LCX** NBArr: Watch 1stream.eu on VLC. Test project for now
-
-  - Static lease of 192.168.40.21
-  - 1GB of RAM
-  - 7GB of disk
-  - VLAN tag 60
-  - Firewall
-    - Overall goal: only accessible within secure VLANs and no exposure at all
-    - Security group: secure
-    - Security group: ssh-reacheable
-    - Security group: webpage
-    - Allow TCP and UDP on 3000 for the stream. Might not need UDP?
 
 - **LCX** L-Tracker: Location tracker storage and server
 
@@ -241,7 +217,7 @@ Router has a bridge configured as follows:
   - ID: 30
   - Current tagged:
     - bridge-LAN
-    - ether5-WLAN: Does tagging tiself
+    - ether5-WLAN: Does tagging itself
   - Current Untagged: empty
 
 ## Wifi

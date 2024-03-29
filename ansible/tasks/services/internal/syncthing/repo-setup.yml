@@ -13,25 +13,6 @@
     update_cache: true
   become: true
 
-# - name: Create remote SSH directory
-#   file:
-#     path: "/home/lorenzo/.ssh"
-#     state: directory
-
-# - name: Copy private SSH key to remote server
-#   copy:
-#     src: "/home/lorenzo/.ssh/lobsidian_rsa"
-#     dest: "/home/lorenzo/.ssh/id_rsa"
-#     mode: '0600'
-#   become_user: lorenzo
-#   become: true
-# - name: Copy public SSH key to remote server
-#   copy:
-#     src: "/home/lorenzo/.ssh/lobsidian_rsa.pub"
-#     dest: "/home/lorenzo/.ssh/id_rsa.pub"
-#     mode: '0644'
-#   become_user: lorenzo
-#   become: true
 - name: Checkout lobsidian git repo
   git:
     repo: "https://{{ PRIVATE_GIT_USER | urlencode }}:{{ PRIVATE_GIT_PASS | urlencode }}@git.picco.li/lorenzopicoli/lobsidian.git"
