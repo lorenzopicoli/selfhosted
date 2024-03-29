@@ -1,8 +1,9 @@
-- name: Setup Obsidian
-  hosts:
-    - obsidian
-  become: true
 
+
+- name: Setup forgejo
+  hosts:
+    - forgejo
+  become: true
   vars:
     username: lorenzo
     device_type: normal
@@ -22,10 +23,10 @@
     - name: Install docker compose
       ansible.builtin.include_tasks: tasks/install-compose.yml
     
-    - name: Deploy gatekeeper docker apps
+    - name: Deploy forgejo docker apps
       ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
       loop:
-        - syncthing
-    
+        - forgejo
+
     - name: Setup for Active Backup
       ansible.builtin.include_tasks: tasks/setup-rsync-backup.yml
