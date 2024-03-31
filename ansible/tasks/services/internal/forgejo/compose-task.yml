@@ -30,6 +30,16 @@
 
     mode: '0600'
 
+- name: Copy env var for docker compose (db)
+  copy:
+    dest: /home/lorenzo/configs/.db_env
+    content: |
+       POSTGRES_DB="{{ FORGEJO_DB_NAME }}"
+       POSTGRES_USER="{{ FORGEJO_DB_USER }}"
+       POSTGRES_PASSWORD="{{ FORGEJO_DB_PASSWORD }}"
+
+    mode: '0600'
+
 
 - name: Start forgejo container
   community.docker.docker_compose_v2:

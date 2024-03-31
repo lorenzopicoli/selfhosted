@@ -3,7 +3,7 @@ networks:
     external: false
 
 volumes:
-  forgejo_pg:
+  # forgejo_pg:
   forgejo_data:
 
 services:
@@ -28,9 +28,10 @@ services:
   db:
     image: postgres:14
     restart: always
+    user: '0:0'
     env_file:
-      - /home/lorenzo/configs/.env
+      - /home/lorenzo/configs/.db_env
     networks:
       - forgejo
     volumes:
-      - forgejo_pg:/var/lib/postgresql/data
+      - /users/lorenzo/home/forgejo_pg:/var/lib/postgresql/data
