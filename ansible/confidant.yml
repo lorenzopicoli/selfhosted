@@ -21,8 +21,10 @@
     - name: Install docker compose
       ansible.builtin.include_tasks: tasks/install-compose.yml
     
-    - name: Deploy gatekeeper docker apps
+    - name: Deploy vaultwarden docker apps
       ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
       loop:
         - vaultwarden
     
+    - name: Setup for Active Backup
+      ansible.builtin.include_tasks: tasks/setup-rsync-backup.yml

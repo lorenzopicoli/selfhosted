@@ -1,0 +1,18 @@
+- name: UFW - Allow Syncthing connections
+  community.general.ufw:
+    rule: allow
+    port: 22000
+    proto: tcp
+
+- name: UFW - Allow Syncthing connections
+  community.general.ufw:
+    rule: allow
+    port: 22000
+    proto: udp
+
+
+- name: UFW - Allow Syncthing connections
+  community.general.ufw:
+    rule: allow
+    port: 21027
+    proto: udp

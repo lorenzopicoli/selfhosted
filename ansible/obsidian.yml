@@ -15,6 +15,9 @@
 
     - name: Setup linux firewall
       ansible.builtin.include_tasks: tasks/firewall.yml
+    
+    - name: Setup syncthing firewall
+      ansible.builtin.include_tasks: tasks/services/internal/syncthing/syncthing-firewall.yml
 
     - name: Install docker
       ansible.builtin.include_tasks: tasks/docker.yml

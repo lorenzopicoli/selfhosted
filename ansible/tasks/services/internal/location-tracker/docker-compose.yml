@@ -3,6 +3,7 @@ volumes:
   location_data:
 services:
   location-tracker:
+    restart: always
     container_name: location-tracker
     build:
       context: /home/lorenzo/configs/location-tracker/
