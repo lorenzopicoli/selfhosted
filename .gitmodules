@@ -1,3 +1,6 @@
 [submodule "ansible/tasks/services/internal/location-tracker/project"]
 	path = ansible/tasks/services/internal/location-tracker/project
 	url = https://github.com/lorenzopicoli/location-tracker
+[submodule "ansible/tasks/services/external/elciney-password-generator/project"]
+	path = ansible/tasks/services/external/elciney-password-generator/project
+	url = git@github.com:Elcineyjr/PasswordGenerator.git
