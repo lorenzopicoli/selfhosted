@@ -27,6 +27,5 @@
         - pihole
         - nginx-proxy-manager
         - unifi-controller
-        - ddns
     - name: Setup for Active Backup
       ansible.builtin.include_tasks: tasks/setup-rsync-backup.yml

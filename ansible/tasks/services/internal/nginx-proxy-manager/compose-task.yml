@@ -15,7 +15,7 @@
 
       services:
         app:
-          image: 'jc21/nginx-proxy-manager:2.10.4'
+          image: 'jc21/nginx-proxy-manager:2.12.1'
           container_name: npm
           restart: unless-stopped
           ports:
@@ -29,12 +29,6 @@
             - nginx-proxy-manager-le:/etc/letsencrypt
           dns:
             - 172.40.0.11
-          networks:
-            vpn:
-              ipv4_address: 172.40.0.10
-              aliases:
-                - finance.internal
-                - finance.importer.internal
 
   register: output
 

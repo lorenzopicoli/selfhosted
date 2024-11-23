@@ -6,9 +6,8 @@
 | Unifi controller | Gatekeeper   | 8.0.7     | Nov 11, 2023 | VM        | Needs work | [Image moved (read og image message)](https://github.com/linuxserver/docker-unifi-network-application). But new image requires a separate mongodb instance... Need to check how it will affect the resources that I have to allocate for this in proxmox. No HyperBackup configured |
 | Traefik          | RaspberryPi  | 2.11.0    | Mar 09, 2024 | Container | Needs work | v3 is out. Need to update. No HyperBackup configured                                                                                                                                                                                                                                |
 | Syncthing        | Obsidian     | 1.28.0    | Nov 23, 2024 | Container | Working    |                                                                                                                                                                                                                                                                                     |
-| Pihole           | Gatekeeper   | 2023.11.0 | Nov 11, 2023 | VM        | Working    | No HyperBackup configured                                                                                                                                                                                                                                                           |
-| NPM              | Gatekeepr    | 2.10.4    | Nov 11, 2023 | VM        | Working    | No HyperBackup configured                                                                                                                                                                                                                                                           |
-| DDNS updater     | Gatekeeper   | v2.5.0    | Nov 11, 2023 | VM        | Deprecated | Need to clean it up. Deprecated in favour of Mikrotik DDNS                                                                                                                                                                                                                          |
+| Pihole           | Gatekeeper   | 2024.07.0 | Nov 11, 2023 | VM        | Working    |                                                                                                                                                                                                                                                                                     |
+| NPM              | Gatekeepr    | 2.12.1    | Nov 11, 2023 | VM        | Working    |                                                                                                                                                                                                                                                                                     |
 | Spotify-Mongo    | Radioactive  | 6.0.5     |              | Container | Working    | Can't update because of Raspberry Pi's architecture                                                                                                                                                                                                                                 |
 | Spotify Server   | RaspberryPi  | 1.7.3     | Nov 11, 2023 | Container | Working    |                                                                                                                                                                                                                                                                                     |
 | Spotify Client   | RaspberryPi  | 1.7.3     | Nov 11, 2023 | Container | Working    |                                                                                                                                                                                                                                                                                     |
@@ -17,12 +16,13 @@
 
 ## Legacy
 
-| Name            | Container/VM | Version | Last update | Type      | Status | Notes              |
-| --------------- | ------------ | ------- | ----------- | --------- | ------ | ------------------ |
-| Firefly         | Treasury     | latest  |             | Container | Legacy | Moved to beancount |
-| FireflyDB       | Treasury     | latest  |             | Container | Legacy | Moved to beancount |
-| FireflyImporter | Treasury     | latest  |             | Container | Legacy | Moved to beancount |
-| NBarr           | NBarr        | latest  |             | Container | Legacy |                    |
+| Name            | Container/VM | Version | Last update  | Type      | Status     | Notes                                                      |
+| --------------- | ------------ | ------- | ------------ | --------- | ---------- | ---------------------------------------------------------- |
+| Firefly         | Treasury     | latest  |              | Container | Legacy     | Moved to beancount                                         |
+| FireflyDB       | Treasury     | latest  |              | Container | Legacy     | Moved to beancount                                         |
+| FireflyImporter | Treasury     | latest  |              | Container | Legacy     | Moved to beancount                                         |
+| NBarr           | NBarr        | latest  |              | Container | Legacy     |                                                            |
+| DDNS updater    | Gatekeeper   | v2.5.0  | Nov 11, 2023 | VM        | Deprecated | Need to clean it up. Deprecated in favour of Mikrotik DDNS |
 
 ---
 
