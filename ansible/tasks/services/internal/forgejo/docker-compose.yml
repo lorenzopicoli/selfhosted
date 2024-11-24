@@ -8,7 +8,7 @@ volumes:
 
 services:
   server:
-    image: codeberg.org/forgejo/forgejo:1.21
+    image: codeberg.org/forgejo/forgejo:9.0.2
     container_name: forgejo
     env_file:
       - /home/lorenzo/configs/.env
