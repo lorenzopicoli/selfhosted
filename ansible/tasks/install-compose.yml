@@ -4,15 +4,32 @@
     name:  python3-pip
     state: present
 
+# Unclear whether the following is needed.
+# I used in the last raspberry pi reset, but
+# I think it might be useless with docker compose
+# being a part of docker now. Ideally I should
+# just migrate right away and delete this whole file
+# - name: Get Python 3.X version
+#   ansible.builtin.command: python3 --version
+#   register: pyver
+#   changed_when: false
+#   failed_when: pyver.rc != 0
+
+# - name: Remove Python 3.X EXTERNALLY-MANAGED file
+#   ansible.builtin.file:
+#     state: absent
+#     path: "/usr/lib/python{{ pyver.stdout.split()[1] | regex_search('([0-9]+\\.[0-9]+)') }}/EXTERNALLY-MANAGED"
+#   when: pyver.stdout | regex_search('3\.[0-9]+')
+
 # This is being deprecated. Now docker-compose is docker compose. I believe it's already installed
 # with the docker.yml file. The only change is that  community.docker.docker_compose should
 # become community.docker.docker_compose_v2.
 # I'm keeping this here for the time being until I understand how it impacts my active machines
-- name: Install Docker Compose using Pip.
-  pip:
-    name: docker-compose
-    state: present
-    executable: pip3
+# - name: Install Docker Compose using Pip.
+#   pip:
+#     name: docker-compose
+#     state: present
+#     executable: pip3
 
 - name: Ensure Docker is started.
   service:

@@ -1,0 +1,33 @@
+version: '3.8'
+
+networks:
+  web:
+    external: true
+
+volumes:
+  traefik:
+
+services:
+  traefik:
+    image: traefik:3.2.1
+    restart: unless-stopped
+    command:
+      - '--log.level=DEBUG'
+    container_name: traefik
+    ports:
+      - '443:443'
+      - '80:80'
+    env_file:
+      - /home/lorenzo/configs/traefik/.env
+    networks:
+      web:
+        ipv4_address: 172.20.0.10
+        aliases:
+          - spotify.udjaiahs.li
+          - api.spotify.udjaiahs.li
+    volumes:
+      - traefik:/acme
+      - /home/lorenzo/configs/traefik/traefik.toml:/traefik.toml
+      - /home/lorenzo/configs/traefik/traefik_dynamic.toml:/traefik_dynamic.toml
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock

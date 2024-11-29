@@ -18,12 +18,12 @@
     - name: Install docker
       ansible.builtin.include_tasks: tasks/docker-arm.yml
     
-    - name: Install docker compose
-      ansible.builtin.include_tasks: tasks/install-compose.yml
-      
     - name: Set docker firewalls
       ansible.builtin.include_tasks: tasks/docker-firewall.yml
     
+    - name: Install docker compose
+      ansible.builtin.include_tasks: tasks/docker-web-network.yml
+
     - name: Deploy raspberry docker apps
       ansible.builtin.include_tasks: "tasks/services/external/{{ item }}/compose-task.yml"
       loop:

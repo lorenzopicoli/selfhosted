@@ -1,61 +1,43 @@
 ---
-- name: Start your spotify container
-  community.docker.docker_compose:
+- name: Ensure configs dir exists
+  file:
+    path: /home/lorenzo/configs/spotify
+    state: directory
+
+- name: Copy compose file with owner and permissions
+  ansible.builtin.copy:
+    src: ./docker-compose.yml
+    dest: /home/lorenzo/configs/spotify/docker-compose.yml
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
+- name: Copy env var for docker compose
+  copy:
+    dest: /home/lorenzo/configs/spotify/.env
+    content: |
+       API_ENDPOINT=https://api.spotify.udjaiahs.com # This MUST be included as a valid URL in the spotify dashboard (see below)
+       CLIENT_ENDPOINT=https://spotify.udjaiahs.com
+       SPOTIFY_SECRET="{{ SPOTIFY_SPOTIFY_SECRET }}"
+       SPOTIFY_PUBLIC="{{ SPOTIFY_SPOTIFY_PUBLIC }}"
+       MONGO_ENDPOINT=mongodb://192.168.20.5:27017/your_spotify
+
+    mode: '0600'
+
+- name: Copy env var for docker compose (web)
+  copy:
+    dest: /home/lorenzo/configs/spotify/.web_env
+    content: |
+       API_ENDPOINT=https://api.spotify.udjaiahs.com
+    mode: '0600'
+
+
+- name: Start your_spotify container
+  community.docker.docker_compose_v2:
     project_name: your_spotify
-    build: true
-    definition:
-      version: "3.8"
-
-      networks:
-        web:
-          external: true
-        internal: 
-          external: false
-
-      volumes:
-        spotify-data:
-
-      services:
-        server:
-          image: yooooomi/your_spotify_server:1.7.3
-          restart: unless-stopped
-
-          networks:
-            - web
-            - internal
-          environment:
-            API_ENDPOINT: https://api.spotify.udjaiahs.com # This MUST be included as a valid URL in the spotify dashboard (see below)
-            CLIENT_ENDPOINT: https://spotify.udjaiahs.com
-            SPOTIFY_SECRET: "{{ SPOTIFY_SPOTIFY_SECRET }}"
-            SPOTIFY_PUBLIC: "{{ SPOTIFY_SPOTIFY_PUBLIC }}"
-            MONGO_ENDPOINT: mongodb://192.168.20.5:27017/your_spotify
-          labels:
-            - traefik.enable=true
-            - traefik.http.routers.api-spotify.rule=Host(`api.spotify.udjaiahs.com`)
-            - traefik.http.routers.api-spotify.tls.certresolver=lets-encrypt
-            - traefik.http.routers.api-spotify.service=api-spotify
-            - traefik.http.services.api-spotify.loadbalancer.server.port=8080
-
-        web:
-          image: yooooomi/your_spotify_client:1.7.3
-          restart: unless-stopped
-          networks:
-            - web
-            - internal
-          environment:
-            API_ENDPOINT: https://api.spotify.udjaiahs.com
-          labels:
-            - traefik.enable=true
-            - traefik.http.routers.spotify.rule=Host(`spotify.udjaiahs.com`)
-            - traefik.http.routers.spotify.tls.certresolver=lets-encrypt
-            - traefik.http.routers.spotify.service=spotify
-            - traefik.http.services.spotify.loadbalancer.server.port=3000
+    build: always
+    project_src: '/home/lorenzo/configs/spotify'
   register: output
 
 - ansible.builtin.debug:
     var: output
-
-- ansible.builtin.assert:
-    that:
-      - "output.services.server.your_spotify_server_1.state.running"
-

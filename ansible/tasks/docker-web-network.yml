@@ -1,0 +1,5 @@
+- name: Create a network
+  docker_network:
+    name: web
+    ipam_config:
+      - subnet: 172.20.0.0/16
