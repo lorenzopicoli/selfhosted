@@ -29,6 +29,13 @@
             - nginx-proxy-manager-le:/etc/letsencrypt
           dns:
             - 172.40.0.11
+          networks:
+            vpn:
+            # Need to do this otherwise it can't communicate
+            # with pihole properly and can't proxy to its own
+            # container + it can't access the dns server
+            # It effectively leaves it out of the vpn network
+              ipv4_address: 172.40.0.10
 
   register: output
 

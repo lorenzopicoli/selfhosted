@@ -52,6 +52,7 @@
 - name: Install Docker Module for Python
   pip:
     name: docker
+    break_system_packages: true
   when: "docker_command_result.rc == 1"
 
 
