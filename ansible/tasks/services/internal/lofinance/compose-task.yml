@@ -1,0 +1,51 @@
+---
+- name: Ensure configs dir exists
+  file:
+    path: /home/lorenzo/configs
+    state: directory
+
+- name: Copy docker file with owner and permissions
+  ansible.builtin.copy:
+    src: ./project/Dockerfile
+    dest: /home/lorenzo/configs/Dockerfile
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
+- name: Copy docker compose file with owner and permissions
+  ansible.builtin.copy:
+    src: ./docker-compose.yml
+    dest: /home/lorenzo/configs/docker-compose.yml
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
+- name: Copy env var for docker compose
+  copy:
+    dest: /home/lorenzo/configs/.env
+    content: |
+      GIT_REPO_URL="{{ LOFINANCE_GIT_REPO }}"
+      GIT_USERNAME="{{ LOFINANCE_GIT_USERNAME }}"
+      GIT_PASSWORD="{{ LOFINANCE_GIT_PASSWORD }}"
+      GIT_NAME="{{ LOFINANCE_GIT_NAME }}"
+      GIT_EMAIL="{{ LOFINANCE_GIT_EMAIL }}"
+      BEANCOUNT_FILE=/beans/main.beancount
+      # USE_HTTPS=false
+
+    mode: '0600'
+
+
+- name: Start lofinance container
+  community.docker.docker_compose_v2:
+    project_name: lofinance 
+    build: always
+    project_src: '/home/lorenzo/configs'
+  register: output
+
+- ansible.builtin.debug:
+    var: output
+
+# This assertion isn't working
+# - ansible.builtin.assert:
+#     that:
+#       - "output.services.location-tracker.location-tracker.state.running"

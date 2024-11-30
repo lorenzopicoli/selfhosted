@@ -13,6 +13,7 @@
 | Spotify Client   | RaspberryPi  | 1.11.0    | Nov 29, 2023 | Container | Working    |                                                                                                                                                                                                                                                                                     |
 | Location Tracker | L-tracker    | In-house  | Feb 22, 2024 | Container | Working    | Read comments on Obsidian about docker compose version change and ansible. Assertion for running containers not working                                                                                                                                                             |
 | Forgejo          | Forgejo      | 9.0.2     | Nov 23, 2024 | Container | Working    |                                                                                                                                                                                                                                                                                     |
+| Lofinance        | lofinance    | latest    | Nov 30, 2024 | Container | Working    |                                                                                                                                                                                                                                                                                     |
 
 ## Legacy
 

@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  beanfinance:
+    container_name: lofinance
+    build:
+      context: .
+    ports:
+      - '3000:5000'
+    environment:
+      - BEANCOUNT_FILE=/beans/main.beancount
+
+    env_file:
+      - /home/lorenzo/configs/.env
