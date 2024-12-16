@@ -36,6 +36,7 @@ My current homelab consists of:
 
 - Hardware:
   - Mikrotik router
+  - Small thrifted switch
   - Unifi AP LR
   - HP Prodesk Mini G4
     - i5-8500T
