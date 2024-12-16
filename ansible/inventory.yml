@@ -52,3 +52,9 @@ homelab:
       ansible_user: lorenzo
       ansible_architecture: amd64
       ansible_distribution: debian
+    hoarder:
+      ansible_host: 192.168.40.28
+      ansible_user: lorenzo
+      ansible_architecture: amd64
+      ansible_distribution: debian
+

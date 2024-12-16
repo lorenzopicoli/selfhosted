@@ -1,0 +1,37 @@
+---
+- name: Ensure configs dir exists
+  file:
+    path: /home/lorenzo/configs
+    state: directory
+
+- name: Copy compose file with owner and permissions
+  ansible.builtin.copy:
+    src: ./docker-compose.yml
+    dest: /home/lorenzo/configs/docker-compose.yml
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
+- name: Copy env var for docker compose
+  copy:
+    dest: /home/lorenzo/configs/.env
+    content: |
+       MEILI_MASTER_KEY="{{ MEILI_MASTER_KEY }}"
+       NEXTAUTH_SECRET="{{ NEXTAUTH_SECRET }}"
+
+    mode: '0600'
+
+- name: Start hoarder container
+  community.docker.docker_compose_v2:
+    project_name: hoarder
+    build: always
+    project_src: '/home/lorenzo/configs'
+  register: output
+
+- ansible.builtin.debug:
+    var: output
+
+# This assertion isn't working
+# - ansible.builtin.assert:
+#     that:
+#       - "output.services.location-tracker.location-tracker.state.running"
