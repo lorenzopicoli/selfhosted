@@ -1,0 +1,28 @@
+---
+- name: Ensure configs dir exists
+  file:
+    path: /home/lorenzo/configs/dozzle
+    state: directory
+
+- name: Copy compose file with owner and permissions
+  ansible.builtin.copy:
+    src: ./docker-compose.yml
+    dest: /home/lorenzo/configs/dozzle/docker-compose.yml
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
+- name: Start hoarder container
+  community.docker.docker_compose_v2:
+    project_name: dozzle-agent
+    build: always
+    project_src: '/home/lorenzo/configs/dozzle'
+  register: output
+
+- ansible.builtin.debug:
+    var: output
+
+# This assertion isn't working
+# - ansible.builtin.assert:
+#     that:
+#       - "output.services.location-tracker.location-tracker.state.running"

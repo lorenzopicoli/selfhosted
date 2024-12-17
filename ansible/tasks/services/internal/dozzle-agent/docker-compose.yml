@@ -1,0 +1,36 @@
+networks:
+  socket_proxy:
+    name: socket_proxy
+
+services:
+  dozzle-agent:
+    image: amir20/dozzle:v8.9.0
+    command: agent
+    # volumes:
+    # - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      DOCKER_HOST: tcp://socketproxy:2375
+    ports:
+      - 7007:7007
+    networks:
+      - socket_proxy
+    depends_on:
+      - socketproxy
+  socketproxy:
+    image: tecnativa/docker-socket-proxy:0.3.0
+    privileged: true
+    environment:
+      CONTAINERS: 1
+      ALLOW_START: 1
+      ALLOW_RESTARTS: 1
+      ALLOW_STOP: 1
+      INFO: 1
+      CONFIGS: 1
+      IMAGES: 1
+      NETWORKS: 1
+      SYSTEM: 1
+      POST: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - socket_proxy
