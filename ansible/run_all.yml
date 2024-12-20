@@ -11,3 +11,4 @@
 - import_playbook: radioactive.yml
 - import_playbook: raspberrypi.yml
 - import_playbook: unifi-controller.yml
+- import_playbook: uptime-kuma.yml

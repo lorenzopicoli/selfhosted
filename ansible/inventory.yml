@@ -61,5 +61,10 @@ homelab:
       ansible_user: lorenzo
       ansible_architecture: amd64
       ansible_distribution: debian
+    uptime-kuma:
+      ansible_host: 192.168.40.33
+      ansible_user: lorenzo
+      ansible_architecture: amd64
+      ansible_distribution: debian
 
 
