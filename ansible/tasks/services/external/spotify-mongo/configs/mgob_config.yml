@@ -1,0 +1,23 @@
+scheduler:
+  cron: "0 6,18 */1 * *" # run every day at 6:00 and 18:00 UTC
+  retention: 4 # Retains 14 local backups
+  timeout: 60 # Operation timeout: 60 minutes
+target:
+  host: "mongo" # Mongod IP or host name
+  port: 27017 # Mongodb port
+  database: "" # Database name, leave blank to backup all databases
+  username: "" # Username, leave blank if auth is not enabled
+  password: "" # Password
+  params: "" # Additional mongodump params, leave blank if not needed
+  noGzip: false # Disable gzip compression (false means compression is enabled)
+
+retry:
+  attempts: 3 # number of retries
+  backoffFactor: 60 # backoff factor  * (2 ^ attemptCount) seconds
+
+# validation:
+#   database:
+#     host: "mongo"
+#     port: 27017
+#     noGzip: false
+#     database: test_restore # Database name for restore operation

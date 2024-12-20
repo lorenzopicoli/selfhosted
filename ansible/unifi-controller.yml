@@ -21,7 +21,7 @@
     - name: Install docker compose
       ansible.builtin.include_tasks: tasks/install-compose.yml
     
-    - name: Deploy gatekeeper docker apps
+    - name: Deploy unifi-controller docker apps
       ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
       loop:
         - unifi-controller

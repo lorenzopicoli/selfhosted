@@ -1,30 +1,43 @@
 ---
-- name: Start spotify database container
-  community.docker.docker_compose:
+- name: Ensure configs dir exists
+  file:
+    path: /home/lorenzo/configs
+    state: directory
+    
+- name: Ensure configs dir exists
+  file:
+    path: /home/lorenzo/configs/mgob
+    state: directory
+
+- name: Copy compose file with owner and permissions
+  ansible.builtin.copy:
+    src: ./docker-compose.yml
+    dest: /home/lorenzo/configs/docker-compose.yml
+    owner: lorenzo
+    mode: '0644'
+  become: true
+  
+- name: Copy mgob config file with owner and permissions
+  ansible.builtin.copy:
+    src: ./configs/mgob_config.yml
+    dest: /home/lorenzo/configs/mgob/mgob_config.yml
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
+- name: Copy env var for docker compose
+  copy:
+    dest: /home/lorenzo/configs/.env
+    content: |
+
+    mode: '0600'
+
+- name: Start spotify mongo container
+  community.docker.docker_compose_v2:
     project_name: your_spotify_db
-    build: true
-    definition:
-      version: "3.8"
-
-      volumes:
-        spotify-data:
-
-      services:
-        mongo:
-          container_name: mongo
-          image: mongo:6.0.5
-          ports:
-            - '27017:27017'
-
-          volumes:
-            - /users/lorenzo/home/mongodb:/data/db
-          user: "0:0"
+    build: always
+    project_src: '/home/lorenzo/configs'
   register: output
 
 - ansible.builtin.debug:
     var: output
-
-- ansible.builtin.assert:
-    that:
-      - "output.services.mongo.mongo.state.running"
-

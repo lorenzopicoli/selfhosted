@@ -1,0 +1,31 @@
+version: '3.8'
+
+volumes:
+  mgob_storage:
+  mgob_tmp:
+  mgob_data:
+
+services:
+  mongo:
+    container_name: mongo
+    image: mongo:6.0.5
+    ports:
+      - '27017:27017'
+
+    volumes:
+      # TODO: move to a docker volume?
+      - /home/lorenzo/mongodb:/data/db
+    user: '0:0'
+
+  mgob:
+    image: maxisam/mgob:2.0.27
+    container_name: mgob
+    ports:
+      # For the HTTP server
+      - 8090:8090
+    volumes:
+      - /home/lorenzo/configs/mgob:/config
+      - mgob_storage:/storage
+      - mgob_tmp:/tmp
+      - mgob_data:/data
+    command: -LogLevel=info

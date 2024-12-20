@@ -3,8 +3,8 @@ version: '3.8'
 networks:
   web:
     external: true
-  internal:
-    external: false
+  # internal:
+  #   external: false
 
 volumes:
   spotify-data:
@@ -13,10 +13,8 @@ services:
   server:
     image: yooooomi/your_spotify_server:nightly
     restart: unless-stopped
-
     networks:
       - web
-      - internal
     env_file:
       - /home/lorenzo/configs/spotify/.env
     labels:
@@ -25,13 +23,13 @@ services:
       - traefik.http.routers.api-spotify.tls.certresolver=lets-encrypt
       - traefik.http.routers.api-spotify.service=api-spotify
       - traefik.http.services.api-spotify.loadbalancer.server.port=8080
-
+    dns:
+      - 192.168.40.7
   web:
     image: yooooomi/your_spotify_client:nightly
     restart: unless-stopped
     networks:
       - web
-      - internal
     env_file:
       - /home/lorenzo/configs/spotify/.web_env
     labels:
