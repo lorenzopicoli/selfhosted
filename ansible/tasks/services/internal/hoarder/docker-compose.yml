@@ -17,6 +17,8 @@ services:
   chrome:
     image: gcr.io/zenika-hub/alpine-chrome:123
     restart: unless-stopped
+    # cap_add:
+    # - SYS_ADMIN
     command:
       - --no-sandbox
       - --disable-gpu
@@ -24,6 +26,10 @@ services:
       - --remote-debugging-address=0.0.0.0
       - --remote-debugging-port=9222
       - --hide-scrollbars
+    volumes:
+      - /dev/shm:/dev/shm
+      - /tmp:/tmp
+
   meilisearch:
     image: getmeili/meilisearch:v1.11.1
     restart: unless-stopped
