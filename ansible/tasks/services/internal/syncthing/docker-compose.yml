@@ -1,0 +1,23 @@
+version: '3.8'
+
+volumes:
+  syncthing:
+
+services:
+  syncthing:
+    image: linuxserver/syncthing:1.28.0
+    container_name: syncthing
+    restart: unless-stopped
+    hostname: syncthing
+
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - syncthing:/config
+      - /home/lorenzo/lobsidian:/lobsidian
+    ports:
+      - 8384:8384
+      - 22000:22000/tcp
+      - 22000:22000/udp
+      - 21027:21027/udp

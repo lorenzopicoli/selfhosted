@@ -11,29 +11,13 @@ homelab:
       ansible_user: lorenzo
       ansible_architecture: amd64
       ansible_distribution: debian
-      
-    gatekeeper:
-      ansible_host: 192.168.40.2
-      ansible_user: lorenzo
-      ansible_architecture: amd64
-      ansible_distribution: debian
     obsidian:
       ansible_host: 192.168.40.18
       ansible_user: lorenzo
       ansible_architecture: amd64
       ansible_distribution: debian
-    treasury:
-      ansible_host: 192.168.40.17
-      ansible_user: lorenzo
-      ansible_architecture: amd64
-      ansible_distribution: debian
     confidant:
       ansible_host: 192.168.40.19
-      ansible_user: lorenzo
-      ansible_architecture: amd64
-      ansible_distribution: debian
-    nbarr:
-      ansible_host: 192.168.40.21
       ansible_user: lorenzo
       ansible_architecture: amd64
       ansible_distribution: debian
@@ -57,4 +41,25 @@ homelab:
       ansible_user: lorenzo
       ansible_architecture: amd64
       ansible_distribution: debian
+    pihole:
+      ansible_host: 192.168.40.7
+      ansible_user: lorenzo
+      ansible_architecture: amd64
+      ansible_distribution: debian
+    nginx-proxy-manager:
+      ansible_host: 192.168.40.14
+      ansible_user: lorenzo
+      ansible_architecture: amd64
+      ansible_distribution: debian
+    unifi-controller:
+      ansible_host: 192.168.40.23
+      ansible_user: lorenzo
+      ansible_architecture: amd64
+      ansible_distribution: debian
+    dozzle:
+      ansible_host: 192.168.40.25
+      ansible_user: lorenzo
+      ansible_architecture: amd64
+      ansible_distribution: debian
+
 

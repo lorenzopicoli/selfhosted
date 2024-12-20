@@ -1,41 +1,30 @@
 ---
+- name: Ensure configs dir exists
+  file:
+    path: /home/lorenzo/configs
+    state: directory
+
+- name: Copy compose file with owner and permissions
+  ansible.builtin.copy:
+    src: ./docker-compose.yml
+    dest: /home/lorenzo/configs/docker-compose.yml
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
+- name: Copy env var for docker compose
+  copy:
+    dest: /home/lorenzo/configs/.env
+    content: |
+
+    mode: '0600'
+
 - name: Start syncthing container
-  community.docker.docker_compose:
-    project_name: syncthing
-    build: true
-    definition:
-      version: "3.8"
-
-      volumes:
-        syncthing:
-
-      services:
-        syncthing:
-          image: linuxserver/syncthing:1.28.0
-          container_name: syncthing
-          restart: unless-stopped
-          hostname: syncthing
-
-          environment:
-            - PUID=1000
-            - PGID=1000
-          volumes:
-            - syncthing:/config
-            - /home/lorenzo/lobsidian:/lobsidian
-          ports:
-            - 8384:8384
-            - 22000:22000/tcp
-            - 22000:22000/udp
-            - 21027:21027/udp
-
+  community.docker.docker_compose_v2:
+    project_name: syncthing 
+    build: always
+    project_src: '/home/lorenzo/configs'
   register: output
-
-- ansible.builtin.debug:
-    var: output
-
-- ansible.builtin.assert:
-    that:
-      - "output.services.syncthing.syncthing.state.running"
 
 - name: Setup lobisidian syncthing folder
   ansible.builtin.include_tasks: ./repo-setup.yml

@@ -2,6 +2,7 @@ version: '3.8'
 services:
   beanfinance:
     container_name: lofinance
+    restart: unless-stopped
     build:
       context: .
     ports:

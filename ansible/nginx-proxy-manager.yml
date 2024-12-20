@@ -1,6 +1,6 @@
-- name: Setup forgejo
+- name: Setup nginx proxy manager
   hosts:
-    - forgejo
+    - nginx-proxy-manager
   become: true
   vars:
     username: lorenzo
@@ -21,11 +21,14 @@
     - name: Install docker compose
       ansible.builtin.include_tasks: tasks/install-compose.yml
     
-    - name: Deploy forgejo docker apps
+    - name: Deploy npm docker apps
       ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
       loop:
-        - forgejo
+        - nginx-proxy-manager
         - dozzle-agent
-
+        # - nginx-proxy-manager
+        # - unifi-controller
     - name: Setup for Active Backup
       ansible.builtin.include_tasks: tasks/setup-rsync-backup.yml
+
+

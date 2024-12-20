@@ -1,6 +1,6 @@
-- name: Setup gatekeeper
+- name: Setup pihole
   hosts:
-    - gatekeeper
+    - pihole
   become: true
   vars:
     username: lorenzo
@@ -25,7 +25,9 @@
       ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
       loop:
         - pihole
-        - nginx-proxy-manager
-        - unifi-controller
+        - dozzle-agent
+        # - nginx-proxy-manager
+        # - unifi-controller
     - name: Setup for Active Backup
       ansible.builtin.include_tasks: tasks/setup-rsync-backup.yml
+

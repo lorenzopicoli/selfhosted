@@ -3,29 +3,21 @@ networks:
     name: socket_proxy
 
 services:
-  dozzle-agent:
+  dozzle:
     image: amir20/dozzle:v8.9.0
-    command: agent
-    restart: unless-stopped
-    # volumes:
-    # - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       DOCKER_HOST: tcp://socketproxy:2375
-    # This is used in machines exposed to the internet
-    # and not managed by proxmox. This means that technically
-    # this port is open to the world. But the router
-    # properly handles firewall in this case. Just be careful
-    # if you take this setup without caring with the router firewall
-    ports:
-      - 7007:7007
+      DOZZLE_REMOTE_AGENT: '192.168.40.28:7007,192.168.40.23:7007,192.168.40.18:7007,192.168.40.19:7007,192.168.40.27:7007,192.168.40.16:7007,192.168.40.7:7007,192.168.40.14:7007,192.168.20.5:7007,192.168.20.3:7007'
+      DOZZLE_ENABLE_ACTIONS: true
     networks:
       - socket_proxy
     depends_on:
       - socketproxy
+    ports:
+      - 8080:8080
   socketproxy:
     image: tecnativa/docker-socket-proxy:0.3.0
     privileged: true
-    restart: unless-stopped
     environment:
       CONTAINERS: 1
       ALLOW_START: 1

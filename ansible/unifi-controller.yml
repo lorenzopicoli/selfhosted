@@ -1,6 +1,6 @@
-- name: Setup nbarr
+- name: Setup unifi controller
   hosts:
-    - nbarr
+    - unifi-controller
   become: true
   vars:
     username: lorenzo
@@ -21,7 +21,12 @@
     - name: Install docker compose
       ansible.builtin.include_tasks: tasks/install-compose.yml
     
-    - name: Deploy nbarr docker apps
+    - name: Deploy gatekeeper docker apps
       ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
       loop:
-        - nbarr
+        - unifi-controller
+        - dozzle-agent
+    - name: Setup for Active Backup
+      ansible.builtin.include_tasks: tasks/setup-rsync-backup.yml
+
+

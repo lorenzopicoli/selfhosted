@@ -14,5 +14,5 @@
   become: true
 
 - name: Give access to docker volumes
-  ansible.builtin.shell: sudo setfacl -R -m u:lorenzo:rX /var/lib/docker 
+  ansible.builtin.shell: sudo setfacl -R -m u:lorenzo:rX /var/lib/docker/volumes 
   become: true

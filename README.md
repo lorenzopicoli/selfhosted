@@ -16,16 +16,6 @@
 | Lofinance        | lofinance    | latest    | Nov 30, 2024 | Container | Working    |                                                                                                                                                                                                                                                                                     |
 | Hoarder          | hoarder      | 0.19.0    | Dec 16, 2024 | Container | Working    |                                                                                                                                                                                                                                                                                     |
 
-## Legacy
-
-| Name            | Container/VM | Version | Last update  | Type      | Status     | Notes                                                      |
-| --------------- | ------------ | ------- | ------------ | --------- | ---------- | ---------------------------------------------------------- |
-| Firefly         | Treasury     | latest  |              | Container | Legacy     | Moved to beancount                                         |
-| FireflyDB       | Treasury     | latest  |              | Container | Legacy     | Moved to beancount                                         |
-| FireflyImporter | Treasury     | latest  |              | Container | Legacy     | Moved to beancount                                         |
-| NBarr           | NBarr        | latest  |              | Container | Legacy     |                                                            |
-| DDNS updater    | Gatekeeper   | v2.5.0  | Nov 11, 2023 | VM        | Deprecated | Need to clean it up. Deprecated in favour of Mikrotik DDNS |
-
 ---
 
 ## General info
@@ -36,7 +26,7 @@ My current homelab consists of:
 
 - Hardware:
   - Mikrotik router
-  - Small thrifted switch
+  - Thrifted switch
   - Unifi AP LR
   - HP Prodesk Mini G4
     - i5-8500T
@@ -50,6 +40,10 @@ My current homelab consists of:
     - 1 500GB SSD (Linux)
     - 1TB M2 SSD (Windows)
   - Synology NAS
+  - Beelink Mini S12 Pro
+    - N100
+    - 16GB DDR4
+    - 500GB M.2
 
 ## ISP
 
@@ -61,89 +55,7 @@ My current homelab consists of:
 
 All VMs are run on Proxmox.
 
-There are a few firewall security groups configured:
-
-- dns: accept all protocols on port 53 from all local network
-- secure: drop all connections coming from the public VLAN by checking the IP range
-- ssh-reacheable: allows ssh connections from all local IP ranges. Including public VLAN _problematic_
-- unifi: allows tcp on 6789, udp on 1900, tcp on 8080, udp on 10001, udp on 3478, tcp on 8443
-- webpage: allow tcp on 443, allow tcp on 80, allow icmp
-
 All machines have a default firewall policy of accept outgoing and drop incoming.
-
-The vm list is:
-
-- **LCX** Obsidian: handles keeping obsidian in sync with github repo
-
-  - Static lease of 192.168.40.18
-  - 1GB of RAM
-  - 6GB of disk
-  - VLAN tag 60
-  - Firewall
-    - Overall goal: only accessible within secure VLANs and no exposure at all
-    - Security group: secure
-    - Security group: ssh-reacheable
-    - Other rules for ports described here: https://hub.docker.com/r/linuxserver/syncthing
-
-- **LCX** Confidant: handles secrets and passwords
-
-  - Static lease of 192.168.40.19
-  - 1GB of RAM
-  - 6GB of disk
-  - VLAN tag 60
-  - Firewall
-    - Overall goal: only accessible within secure VLANs and no exposure at all
-    - Security group: secure
-    - Security group: ssh-reacheable
-    - Security group: webpage
-    - Allow TCP on 3012 for notifications I believe
-
-- **LCX** L-Tracker: Location tracker storage and server
-
-  - Static lease of 192.168.40.27
-  - 1GB of RAM
-  - 5GB of disk
-  - VLAN tag 60
-  - Firewall
-    - Overall goal: only accessible within secure VLANs and no exposure at all
-    - Security group: secure
-    - Security group: ssh-reacheable
-    - Allow TCP on 3000 for the UI
-
-- **VM** Gatekeeper: Entrance point for all devices on the network. Contains everything from DNS server to reverse proxy to AP controller.
-
-  - Static lease of 192.168.40.2
-  - 4GB of RAM
-  - 32GB of disk
-  - VLAN tag 60
-  - Firewall
-    - Overall goal: only accessible within secure VLANs. Should need to expose some things specially for DNS and possibly wireguard, but still a critical service.
-    - Security group: secure
-    - Security group: ssh-reacheable
-    - Security group: webpage
-    - Security group: dns
-    - Security group: unifi
-    - Allow TCP
-      - 8000 (unifi?)
-      - 53 from 192.168.20.5 (radioactive)
-      - 53 from 192.168.20.3 (raspberry pi)
-      - 8081 to access pihole if DNS is down
-      - 81 to access reverse proxy if DNS is down
-    - Allow UDP
-      - 53 from 192.168.20.5 (radioactive)
-      - 53 from 192.168.20.3 (raspberry pi)
-
-- **VM** Radioactive: VM that contains services that can´t run on the PI, but must be accessible to the internet on the public network. Very resource hungry because of the Spotify mongo DB implementation. So it that application alone uses a lot of CPU and memory. This is a VM and not a container to add another layer of security in case of a breach
-  - Static lease of 192.168.20.5
-  - 2GB of RAM
-  - 3 CPUs
-  - 7GB of disk
-  - VLAN tag 20
-  - Firewall
-    - Overall goal: To be treated like the raspberry pi is treated. No need to be too intense on firewall rules since the router should take care of most.
-    - Allow TCP
-      - 827017
-    - Drop all others IN
 
 ## Network
 
@@ -225,8 +137,8 @@ Router has a bridge configured as follows:
     - Bridge-LAN
     - ether3-Proxmox: Proxmox uses private network primarily, but it does the tagging itself
     - ether5-WLAN: Unifi provides an SSID for secure network. It does the tagging itself
-  - Current untagged:
-    - Ether2-workstation: hmm... not sure why that's there... doesn't that mean that workstation should be tagged 60? But it has a .88 IP...
+    - Ether2-workstation: tagged because the beelink also connects here with a switch
+  - Current untagged: empty
 - Work/Guest VLAN _inactive_:
   - ID: 30
   - Current tagged:

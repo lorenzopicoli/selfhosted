@@ -1,0 +1,23 @@
+version: '3.8'
+
+volumes:
+  nginx-proxy-manager-data:
+  nginx-proxy-manager-le:
+
+services:
+  app:
+    image: 'jc21/nginx-proxy-manager:2.12.1'
+    container_name: npm
+    restart: unless-stopped
+    ports:
+      - '443:443'
+      - '80:80'
+      # Admin dashboard. We reverse proxy to the dashboard, but in case
+      # it stops working, we can still access it directly.
+      - '81:81'
+
+    dns:
+      - 192.168.40.7
+    volumes:
+      - nginx-proxy-manager-data:/data
+      - nginx-proxy-manager-le:/etc/letsencrypt

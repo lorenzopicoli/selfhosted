@@ -12,24 +12,12 @@
     mode: '0644'
   become: true
 
-- name: Copy env var for docker compose
-  copy:
-    dest: /home/lorenzo/configs/.env
-    content: |
-
-    mode: '0600'
-
-- name: Start npm container
+- name: Start dozzle container
   community.docker.docker_compose_v2:
-    project_name: npm 
+    project_name: dozzle
     build: always
     project_src: '/home/lorenzo/configs'
   register: output
 
 - ansible.builtin.debug:
     var: output
-
-# This assertion isn't working
-# - ansible.builtin.assert:
-#     that:
-#       - "output.services.location-tracker.location-tracker.state.running"

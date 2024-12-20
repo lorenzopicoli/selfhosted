@@ -1,0 +1,13 @@
+---
+- import_playbook: confidant.yml
+- import_playbook: dozzle.yml
+- import_playbook: forgejo.yml
+- import_playbook: hoarder.yml
+- import_playbook: l-tracker.yml
+- import_playbook: nginx-proxy-manager.yml
+- import_playbook: obsidian.yml
+- import_playbook: pihole.yml
+- import_playbook: lofinance.yml
+- import_playbook: radioactive.yml
+- import_playbook: raspberrypi.yml
+- import_playbook: unifi-controller.yml

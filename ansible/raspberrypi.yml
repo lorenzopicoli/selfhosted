@@ -18,11 +18,9 @@
     - name: Install docker
       ansible.builtin.include_tasks: tasks/docker-arm.yml
     
-    - name: Set docker firewalls
-      ansible.builtin.include_tasks: tasks/docker-firewall.yml
-    
-    - name: Install docker compose
+    - name: Add docker web network
       ansible.builtin.include_tasks: tasks/docker-web-network.yml
+    
 
     - name: Deploy raspberry docker apps
       ansible.builtin.include_tasks: "tasks/services/external/{{ item }}/compose-task.yml"
@@ -30,8 +28,10 @@
         - traefik
         - spotify
 
-    - name: Setup for Active Backup
-      ansible.builtin.include_tasks: tasks/setup-rsync-backup.yml
+    - name: Deploy radioactive internal docker apps
+      ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
+      loop:
+        - dozzle-agent
     
     - name: Setup for Traefik
       ansible.builtin.include_tasks: tasks/traefik-acme-perm.yml

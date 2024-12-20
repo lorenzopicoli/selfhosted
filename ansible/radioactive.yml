@@ -21,8 +21,15 @@
     - name: Install docker compose
       ansible.builtin.include_tasks: tasks/install-compose.yml
     
-    - name: Deploy gatekeeper docker apps
+    - name: Deploy radioactive docker apps
       ansible.builtin.include_tasks: "tasks/services/external/{{ item }}/compose-task.yml"
       loop:
         - spotify-mongo
+    - name: Deploy radioactive internal docker apps
+      ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
+      loop:
+        - dozzle-agent
+    
+    - name: Setup for Active Backup
+      ansible.builtin.include_tasks: tasks/setup-rsync-backup.yml
     

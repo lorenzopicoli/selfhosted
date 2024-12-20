@@ -1,45 +1,45 @@
 ---
+- name: Ensure configs dir exists
+  file:
+    path: /home/lorenzo/configs
+    state: directory
+
+- name: Copy compose file with owner and permissions
+  ansible.builtin.copy:
+    src: ./docker-compose.yml
+    dest: /home/lorenzo/configs/docker-compose.yml
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
+- name: Copy env var for docker compose
+  copy:
+    dest: /home/lorenzo/configs/.env
+    content: |
+      WEBSOCKET_ENABLED="{{ VAULTWARDEN_WEBSOCKET_ENABLED }}"
+      ORG_EVENTS_ENABLED="{{ VAULTWARDEN_ORG_EVENTS_ENABLED }}"
+      EVENTS_DAYS_RETAIN="{{ VAULTWARDEN_EVENTS_DAYS_RETAIN }}"
+      SIGNUPS_ALLOWED="{{ VAULTWARDEN_SIGNUPS_ALLOWED }}"
+      SIGNUPS_VERIFY="{{ VAULTWARDEN_SIGNUPS_VERIFY }}"
+      PASSWORD_HINTS_ALLOWED="{{ VAULTWARDEN_PASSWORD_HINTS_ALLOWED }}"
+      DOMAIN="{{ VAULTWARDEN_DOMAIN }}"
+      SMTP_HOST="{{ VAULTWARDEN_SMTP_HOST }}"
+      SMTP_FROM="{{ VAULTWARDEN_SMTP_FROM }}"
+      SMTP_FROM_NAME="{{ VAULTWARDEN_SMTP_FROM_NAME }}"
+      SMTP_PORT="{{ VAULTWARDEN_SMTP_PORT }}"
+      SMTP_USERNAME="{{ VAULTWARDEN_SMTP_USERNAME }}"
+      SMTP_PASSWORD="{{ VAULTWARDEN_SMTP_PASSWORD }}"
+      SMTP_TIMEOUT="{{ VAULTWARDEN_SMTP_TIMEOUT }}"
+
+    mode: '0600'
+
 - name: Start vaultwarden container
-  community.docker.docker_compose:
+  community.docker.docker_compose_v2:
     project_name: vaultwarden
-    build: true
-    definition:
-      version: '3.8'
-
-      volumes:
-        vaultwarden:
-
-      services:
-        vaultwarden:
-          image: vaultwarden/server:1.32.5-alpine
-          container_name: vaultwarden
-          restart: unless-stopped
-          volumes:
-            - vaultwarden:/data
-          ports:
-            - '3012:3012'
-            - '80:80'
-          environment:
-            - "WEBSOCKET_ENABLED={{ VAULTWARDEN_WEBSOCKET_ENABLED }}"
-            - "ORG_EVENTS_ENABLED={{ VAULTWARDEN_ORG_EVENTS_ENABLED }}"
-            - "EVENTS_DAYS_RETAIN={{ VAULTWARDEN_EVENTS_DAYS_RETAIN }}"
-            - "SIGNUPS_ALLOWED={{ VAULTWARDEN_SIGNUPS_ALLOWED }}"
-            - "SIGNUPS_VERIFY={{ VAULTWARDEN_SIGNUPS_VERIFY }}"
-            - "PASSWORD_HINTS_ALLOWED={{ VAULTWARDEN_PASSWORD_HINTS_ALLOWED }}"
-            - "DOMAIN={{ VAULTWARDEN_DOMAIN }}"
-            - "SMTP_HOST={{ VAULTWARDEN_SMTP_HOST }}"
-            - "SMTP_FROM={{ VAULTWARDEN_SMTP_FROM }}"
-            - "SMTP_FROM_NAME={{ VAULTWARDEN_SMTP_FROM_NAME }}"
-            - "SMTP_PORT={{ VAULTWARDEN_SMTP_PORT }}"
-            - "SMTP_USERNAME={{ VAULTWARDEN_SMTP_USERNAME }}"
-            - "SMTP_PASSWORD={{ VAULTWARDEN_SMTP_PASSWORD }}"
-            - "SMTP_TIMEOUT={{ VAULTWARDEN_SMTP_TIMEOUT }}"
-
+    build: always
+    project_src: '/home/lorenzo/configs'
   register: output
 
 - ansible.builtin.debug:
     var: output
 
-- ansible.builtin.assert:
-    that:
-      - "output.services.vaultwarden.vaultwarden.state.running"

@@ -1,0 +1,17 @@
+version: '3.8'
+
+volumes:
+  vaultwarden:
+
+services:
+  vaultwarden:
+    image: vaultwarden/server:1.32.5-alpine
+    container_name: vaultwarden
+    restart: unless-stopped
+    volumes:
+      - vaultwarden:/data
+    env_file:
+      - /home/lorenzo/configs/.env
+    ports:
+      - '3012:3012'
+      - '80:80'
