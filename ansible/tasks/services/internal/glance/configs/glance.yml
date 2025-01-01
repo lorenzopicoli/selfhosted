@@ -1,0 +1,186 @@
+theme:
+  background-color: 50 1 6
+  primary-color: 24 97 58
+  negative-color: 209 88 54
+pages:
+  - name: Home
+    columns:
+      - size: small
+        widgets:
+
+          - type: lobsters
+            sort-by: hot
+            limit: 15
+            collapse-after: 5
+          
+          - type: bookmarks
+            groups:
+              - title: Repos
+                links:
+                  - title: Lomnia
+                    url: https://github.com/lorenzopicoli/lomnia
+                  - title: Selfhosted
+                    url: https://github.com/lorenzopicoli/selfhosted
+                  - title: Blog
+                    url: https://github.com/lorenzopicoli/blog
+              - title: Services
+                color: 10 70 50
+                links:
+                  - title: DNS
+                    url: https://dns.picco.li
+                  - title: Proxy
+                    url: https://proxy.picco.li
+                  - title: Proxmox
+                    url: https://proxmox.picco.li
+                  - title: Moxprox
+                    url: https://moxprox.picco.li
+                  - title: Finance
+                    url: https://finance.picco.li
+              - title: Social
+                color: 200 50 50
+                links:
+                  - title: Reddit
+                    url: https://www.reddit.com/
+                  - title: Twitter
+                    url: https://twitter.com/
+                  - title: Youtube
+                    url: https://youtube.com/
+
+      - size: full
+        widgets:
+          - type: search
+            search-engine: google
+          - type: hacker-news
+          
+          - type: group
+            widgets:
+              - type: reddit
+                subreddit: selfhosted
+                show-thumbnails: true
+              - type: reddit
+                show-thumbnails: true
+                subreddit: homelab
+              - type: reddit
+                subreddit: chess
+                show-thumbnails: true
+              - type: reddit
+                subreddit: brasil
+                show-thumbnails: true
+              - type: reddit
+                subreddit: canada
+                show-thumbnails: true
+              - type: reddit
+                subreddit: personalfinancecanada
+                show-thumbnails: true
+              - type: reddit
+                subreddit: leagueoflegends 
+                show-thumbnails: true
+              - type: reddit
+                subreddit: nba
+                show-thumbnails: true
+          
+          - type: rss
+            limit: 10
+            collapse-after: 5
+            cache: 3h
+            feeds:
+              - url: https://lorenzomodolo.com/index.xml
+
+      - size: small
+        widgets:
+          # - type: weather
+          #   location: London, United Kingdom
+          - type: videos
+            style: grid-cards
+            limit: 4
+            channels:
+              - UCXuqSBlHAE6Xw-yeJA0Tunw # Linus Tech Tips
+              - UCzOfLNkiScJp3U_h_QlvHHg # Wiljum
+              - UCxkM67T_Iele-mRVUiBkRqg # Jet lag the game
+              - UCnkp4xDOwqqJD7sSM3xdUiQ # Adam Neely
+              - UCYO_jab_esuFRV4b17AJtAw # 3Blue1Brown
+              - UCHnyfMqiRRG1u-2MsSQLbXA # Veritassium
+              - UCxYljUelq6VBk4m8dM-7NVA # Brad Owen
+              - UC6nSFpj9HTCZ5t-N3Rm3-HA # Vsauce
+
+
+          - type: markets
+            markets:
+              - symbol: XEQT.TO
+                name: XEQT
+              - symbol: XGRO.TO
+                name: XGRO
+              - symbol: CADBRL=X
+                name: CAD/BRL
+              - symbol: USDBRL=X
+                name: USD/BRL
+              - symbol: ^DJI
+                name: Dow Jones Industrial Average
+              - symbol: ^IXIC
+                name: NASDAQ Composite
+              - symbol: ^FTSE
+                name: FTSE 100 (UK)
+              - symbol: ^GDAXI
+                name: DAX (Germany)
+              - symbol: ^N225
+                name: Nikkei 225 (Japan)
+              - symbol: ^HSI
+                name: Hang Seng Index (Hong Kong)
+              - symbol: URTH
+                name: MSCI World Index
+
+  - name: News
+    columns:
+      - size: full
+        widgets:
+          - type: search
+            search-engine: google
+          - type: group
+            widgets:
+              - type: rss
+                title: Gazeta do Povo
+                style: detailed-list
+                feeds:
+                  - url: https://www.gazetadopovo.com.br/feed/rss/republica.xml
+                    title: Gazeta do Povo
+              - type: rss
+                title: CBC
+                style: detailed-list
+                feeds:
+                  - url: https://www.cbc.ca/webfeed/rss/rss-topstories 
+                    title: CBC Top Stories
+                  # - url: https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml
+                    # title: New York Times
+              - type: rss
+                title: AP News
+                style: list
+                feeds:
+                  - url: "https://news.google.com/rss/search?q=when:24h+allinurl:apnews.com&hl=en-CA&gl=CA&ceid=CA:en"
+                    title: AP News
+              - type: rss
+                title: The Verge
+                style: list
+                feeds:
+                  - url: https://www.theverge.com/rss/frontpage
+                    title: The Verge
+
+          - type: group
+            widgets:
+              - type: reddit
+                show-thumbnails: true
+                subreddit: worldnews
+              - type: reddit
+                show-thumbnails: true
+                subreddit: technology
+
+
+          - type: rss
+            title: News
+            limit: 30
+            style: detailed-list
+            collapse-after: 13
+            feeds:
+              - url: https://www.ft.com/technology?format=rss
+                title: Financial Times
+              - url: https://feeds.a.dj.com/rss/RSSMarketsMain.xml
+                title: Wall Street Journal
