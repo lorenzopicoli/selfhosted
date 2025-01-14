@@ -1,0 +1,20 @@
+name: hares
+
+volumes:
+  hares_data:
+
+services:
+  hares-app:
+    image: ghcr.io/lorenzopicoli/hares:main
+    ports:
+      - 9000:80
+  couchdb:
+    image: couchdb
+    ports:
+      - 5984:5984
+
+    env_file:
+      - /home/lorenzo/configs/.env
+    volumes:
+      - hares_data:/opt/couchdb/data
+      - /home/lorenzo/configs/local.d:/opt/couchdb/etc/local.d

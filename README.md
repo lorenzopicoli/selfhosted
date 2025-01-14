@@ -18,6 +18,7 @@
 | Dozzle           | dozzle       | 8.9.0     | Dec 20, 2024 | Container | Working    |                                                                                                                                                                                                                                                                                     |
 | Uptime Kuma      | uptime-kuma  | 1         | Dec 20, 2024 | Container | Working    |                                                                                                                                                                                                                                                                                     |
 | Mgob             | mgob         | 2.0.27    | Dec 20, 2024 | Container | Working    |                                                                                                                                                                                                                                                                                     |
+| Hares            | hares        | main      | Jan 13, 2025 | Container | Working    |                                                                                                                                                                                                                                                                                     |
 
 ---
 
