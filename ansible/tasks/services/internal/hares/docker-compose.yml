@@ -6,6 +6,7 @@ volumes:
 services:
   hares-app:
     image: ghcr.io/lorenzopicoli/hares:main
+    pull_policy: always
     ports:
       - 9000:80
   couchdb:

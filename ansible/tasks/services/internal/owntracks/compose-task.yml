@@ -16,26 +16,19 @@
   copy:
     dest: /home/lorenzo/configs/.env
     content: |
-       COUCHDB_USER="{{ HARES_DB_USERNAME }}"
-       COUCHDB_PASSWORD="{{ HARES_DB_PASSWORD }}"
 
     mode: '0600'
 
-- name: Ensure local.d dir exists
-  file:
-    path: /home/lorenzo/configs/local.d
-    state: directory
-
-- name: Copy couchdb config
+- name: Copy owntracks FE config
   copy:
-    src: ./local.ini
-    dest: /home/lorenzo/configs/local.d/local.ini
+    src: ./owntracks-config.js
+    dest: /home/lorenzo/configs/owntracks-config.js
 
     mode: '0600'
 
-- name: Start hares container
+- name: Start owntracks container
   community.docker.docker_compose_v2:
-    project_name: hares
+    project_name: owntracks
     build: always
     project_src: '/home/lorenzo/configs'
   register: output
