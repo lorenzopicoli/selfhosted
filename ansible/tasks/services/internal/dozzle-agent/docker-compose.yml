@@ -4,7 +4,7 @@ networks:
 
 services:
   dozzle-agent:
-    image: amir20/dozzle:v8.9.0
+    image: amir20/dozzle:v8.14.7
     command: agent
     restart: unless-stopped
     # volumes:

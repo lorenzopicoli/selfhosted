@@ -5,8 +5,11 @@ volumes:
 
 services:
   pihole:
+    # cap_add:
+    # - NET_ADMIN
+    # network_mode: host
     container_name: pihole
-    image: pihole/pihole:2024.07.0
+    image: pihole/pihole:2025.11.0
     restart: unless-stopped
     env_file:
       - /home/lorenzo/configs/.env
@@ -14,16 +17,17 @@ services:
     # So for example I couldn't run apt install inside the container without
     # this
     dns:
-      - 127.0.0.1
+      - 1.1.1.1
     ports:
       # Dashboard is accessed through the reverse proxy on dns.internal.
       # But if the reverse proxy or DNS resolution is down I still can
       # access the dashboard directly through this port
-      - 8081:80
-      - 53:53/tcp
-      - 53:53/udp
+      - 8082:80
+      # - 53:53/tcp
+      # - 53:53/udp
     environment:
       TZ: America/Toronto
+      FTLCONF_dns_listeningMode: 'ALL'
     volumes:
       - pihole_etc:/etc/pihole/
       - pihole_dnsmasq:/etc/dnsmasq.d/

@@ -172,15 +172,3 @@ pages:
               - type: reddit
                 show-thumbnails: true
                 subreddit: technology
-
-
-          - type: rss
-            title: News
-            limit: 30
-            style: detailed-list
-            collapse-after: 13
-            feeds:
-              - url: https://www.ft.com/technology?format=rss
-                title: Financial Times
-              - url: https://feeds.a.dj.com/rss/RSSMarketsMain.xml
-                title: Wall Street Journal

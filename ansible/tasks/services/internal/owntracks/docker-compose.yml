@@ -15,7 +15,7 @@ services:
       - SERVER_PORT=8083
     restart: unless-stopped
   owntracks-recorder:
-    image: owntracks/recorder:0.9.9-41
+    image: owntracks/recorder:1.0.1-43
     restart: unless-stopped
     environment:
       - OTR_PORT=0

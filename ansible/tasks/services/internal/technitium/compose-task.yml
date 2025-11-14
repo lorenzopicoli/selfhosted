@@ -1,0 +1,32 @@
+
+---
+- name: Ensure configs dir exists
+  file:
+    path: /home/lorenzo/configs
+    state: directory
+
+- name: Copy compose file with owner and permissions
+  ansible.builtin.copy:
+    src: ./docker-compose.yml
+    dest: /home/lorenzo/configs/docker-compose.yml
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
+- name: Copy env var for docker compose
+  copy:
+    dest: /home/lorenzo/configs/.env
+    content: |
+      DNS_SERVER_ADMIN_PASSWORD="{{ PIHOLE_WEBPASSWORD }}"
+
+    mode: '0600'
+
+- name: Start dns-server container
+  community.docker.docker_compose_v2:
+    project_name: dns-server
+    build: always
+    project_src: '/home/lorenzo/configs'
+  register: output
+
+- ansible.builtin.debug:
+    var: output
