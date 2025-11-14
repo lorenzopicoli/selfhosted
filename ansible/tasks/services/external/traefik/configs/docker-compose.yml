@@ -9,7 +9,7 @@ volumes:
 
 services:
   traefik:
-    image: traefik:3.2.1
+    image: traefik:3.6.1
     restart: unless-stopped
     command:
       - '--log.level=DEBUG'

@@ -11,7 +11,7 @@ volumes:
 
 services:
   server:
-    image: yooooomi/your_spotify_server:nightly
+    image: yooooomi/your_spotify_server:1.14.0
     restart: unless-stopped
     networks:
       - web
@@ -26,7 +26,7 @@ services:
     dns:
       - 192.168.40.7
   web:
-    image: yooooomi/your_spotify_client:nightly
+    image: yooooomi/your_spotify_client:1.14.0
     restart: unless-stopped
     networks:
       - web
