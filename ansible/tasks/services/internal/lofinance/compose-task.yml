@@ -30,7 +30,7 @@
       GIT_NAME="{{ LOFINANCE_GIT_NAME }}"
       GIT_EMAIL="{{ LOFINANCE_GIT_EMAIL }}"
       BEANCOUNT_FILE=/beans/main.beancount
-      # USE_HTTPS=false
+      USE_HTTPS=true
 
     mode: '0600'
 
