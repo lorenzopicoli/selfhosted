@@ -6,7 +6,7 @@ volumes:
 
 services:
   app:
-    image: 'jc21/nginx-proxy-manager:2.12.1'
+    image: 'jc21/nginx-proxy-manager:2.13.4'
     container_name: npm
     restart: unless-stopped
     ports:
