@@ -66,13 +66,13 @@ homelab:
       ansible_user: lorenzo
       ansible_architecture: amd64
       ansible_distribution: debian
-    # hares:
-    #   ansible_host: 192.168.40.36
-    #   ansible_user: lorenzo
-    #   ansible_architecture: amd64
-    #   ansible_distribution: debian
     owntracks:
       ansible_host: 192.168.40.37
+      ansible_user: lorenzo
+      ansible_architecture: amd64
+      ansible_distribution: debian
+    lomnia:
+      ansible_host: 192.168.40.35
       ansible_user: lorenzo
       ansible_architecture: amd64
       ansible_distribution: debian

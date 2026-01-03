@@ -1,0 +1,110 @@
+---
+- name: Ensure configs dir exists
+  file:
+    path: /home/lorenzo/configs
+    state: directory
+
+- name: Copy compose file with owner and permissions
+  ansible.builtin.copy:
+    src: ./docker-compose.yml
+    dest: /home/lorenzo/configs/docker-compose.yml
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
+
+- name: Copy garage config file
+  ansible.builtin.copy:
+    src: ./configs/garage.toml
+    dest: /home/lorenzo/configs/garage.toml
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
+- name: Copy garage setup file (1)
+  ansible.builtin.copy:
+    src: ./configs/setup-garage-layout.sh
+    dest: /home/lorenzo/configs/setup-garage-layout.sh
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
+- name: Copy garage setup file (1)
+  ansible.builtin.copy:
+    src: ./configs/setup-garage-bucket.sh
+    dest: /home/lorenzo/configs/setup-garage-bucket.sh
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
+- name: Ensure garage.toml is a file
+  ansible.builtin.file:
+    path: /home/lorenzo/configs/garage.toml
+    state: file
+  become: true
+
+- name: Copy env var for lomnia backend
+  copy:
+    dest: /home/lorenzo/configs/.be_env
+    content: |
+       S3_ACCESS_KEY_ID="{{ LOMNIA_BE_S3_ACCESS_KEY_ID }}"
+       S3_SECRET_ACCESS_KEY="{{ LOMNIA_BE_S3_SECRET_ACCESS_KEY }}"
+       S3_REGION="{{ LOMNIA_BE_S3_REGION }}"
+       S3_SERVER_URL="{{ LOMNIA_BE_S3_SERVER_URL }}"
+       AMQP_URL="{{ LOMNIA_BE_AMQP_URL }}"
+       
+       INGESTER_QUEUE_NAME="{{ LOMNIA_BE_INGESTER_QUEUE_NAME }}"
+
+       DB_HOST="{{ LOMNIA_BE_DB_HOST }}"
+       DB_USER="{{ LOMNIA_PG_DEFAULT_USER }}"
+       DB_PORT="{{ LOMNIA_BE_DB_PORT }}"
+       DB_PASSWORD="{{ LOMNIA_PG_DEFAULT_PASS }}"
+       DB_NAME="{{ LOMNIA_PG_DEFAULT_DB }}"
+
+    mode: '0600'
+
+- name: Copy env var for lomnia rabbitmq 
+  copy:
+    dest: /home/lorenzo/configs/.rabbitmq_env
+    content: |
+      RABBITMQ_DEFAULT_PASS="{{ LOMNIA_RABBITMQ_DEFAULT_PASS }}" 
+      RABBITMQ_DEFAULT_USER="{{ LOMNIA_RABBITMQ_DEFAULT_USER }}" 
+
+    mode: '0600'
+- name: Copy env var for lomnia garage 
+  copy:
+    dest: /home/lorenzo/configs/.garage_env
+    content: |
+      GARAGE_RPC_SECRET="{{ LOMNIA_GARAGE_RPC_SECRET }}" 
+      GARAGE_ADMIN_TOKEN="{{ LOMNIA_GARAGE_ADMIN_TOKEN }}" 
+      GARAGE_METRICS_TOKEN="{{ LOMNIA_GARAGE_METRICS_TOKEN }}" 
+
+    mode: '0600'
+- name: Copy env var for lomnia garage ui
+  copy:
+    dest: /home/lorenzo/configs/.garage_ui_env
+    content: |
+      API_ADMIN_KEY="{{ LOMNIA_GARAGE_RPC_SECRET }}" 
+      API_BASE_URL="http://garage:3903"
+      S3_ENDPOINT_URL="http://garage:3900"
+      AUTH_USER_PASS="{{ LOMNIA_GARAGE_UI_AUTH }}" 
+
+    mode: '0600'
+- name: Copy env var for lomnia db
+  copy:
+    dest: /home/lorenzo/configs/.db_env
+    content: |
+      POSTGRES_USER="{{ LOMNIA_PG_DEFAULT_USER }}" 
+      POSTGRES_PASSWORD="{{ LOMNIA_PG_DEFAULT_PASS }}" 
+      POSTGRES_DB="{{ LOMNIA_PG_DEFAULT_DB }}"  
+    mode: '0600'
+
+- name: Start lomnia containers
+  community.docker.docker_compose_v2:
+    project_name: lomnia
+    build: always
+    project_src: '/home/lorenzo/configs'
+  register: output
+
+- ansible.builtin.debug:
+    var: output

@@ -1,0 +1,31 @@
+- name: Setup lomnia
+  hosts:
+    - lomnia
+  become: true
+  vars:
+    username: lorenzo
+    device_type: normal
+  vars_files:
+    - env_vars.yml
+
+  tasks:
+    - name: Update server and install essential packages
+      ansible.builtin.include_tasks: tasks/ssh.yml
+
+    - name: Setup linux firewall
+      ansible.builtin.include_tasks: tasks/firewall.yml
+
+    - name: Install docker
+      ansible.builtin.include_tasks: tasks/docker.yml
+    
+    - name: Install docker compose
+      ansible.builtin.include_tasks: tasks/install-compose.yml
+    
+    - name: Deploy lomnia docker apps
+      ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
+      loop:
+        - lomnia
+        - dozzle-agent
+
+    - name: Setup for Active Backup
+      ansible.builtin.include_tasks: tasks/setup-rsync-backup.yml
