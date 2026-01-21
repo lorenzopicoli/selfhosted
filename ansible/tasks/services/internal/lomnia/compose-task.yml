@@ -84,7 +84,7 @@
   copy:
     dest: /home/lorenzo/configs/.garage_ui_env
     content: |
-      API_ADMIN_KEY="{{ LOMNIA_GARAGE_RPC_SECRET }}" 
+      API_ADMIN_KEY="{{ LOMNIA_GARAGE_ADMIN_TOKEN }}" 
       API_BASE_URL="http://garage:3903"
       S3_ENDPOINT_URL="http://garage:3900"
       AUTH_USER_PASS="{{ LOMNIA_GARAGE_UI_AUTH }}" 
