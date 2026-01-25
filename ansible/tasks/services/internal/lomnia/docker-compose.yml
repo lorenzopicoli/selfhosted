@@ -17,6 +17,18 @@ services:
     restart: unless-stopped
     environment:
       API_URL: https://api.lomnia.picco.li
+  ingester:
+    image: ghcr.io/lorenzopicoli/lomnia-ingester:latest
+    container_name: lomnia_ingester
+    pull_policy: always
+    ports:
+      - '3030:3030'
+    restart: unless-stopped
+    env_file:
+      - /home/lorenzo/configs/.ingester_env
+    volumes:
+      - ingester_data:/ingester_data
+      - /home/lorenzo/configs/plugins.yaml:/config/plugins.yaml
   garage:
     image: dxflrs/garage:v2.1.0
     container_name: garage
@@ -59,8 +71,8 @@ services:
   db:
     image: postgis/postgis:18-3.6
     restart: unless-stopped
-    # ports:
-    # - '5432:5432'
+    ports:
+    - '5432:5432'
     env_file:
       - /home/lorenzo/configs/.db_env
     volumes:
@@ -76,3 +88,4 @@ volumes:
   garage_data:
   local_pgdata:
   rabbitmq-data:
+  ingester_data:

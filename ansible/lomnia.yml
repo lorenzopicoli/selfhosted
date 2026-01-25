@@ -27,5 +27,7 @@
         - lomnia
         - dozzle-agent
 
-    - name: Setup for Active Backup
-      ansible.builtin.include_tasks: tasks/setup-rsync-backup.yml
+    # Disabling for the time being because changing the permissons messes with RabbitMQ cookie
+    # https://github.com/docker-library/rabbitmq/issues/171
+    # - name: Setup for Active Backup
+    #   ansible.builtin.include_tasks: tasks/setup-rsync-backup.yml

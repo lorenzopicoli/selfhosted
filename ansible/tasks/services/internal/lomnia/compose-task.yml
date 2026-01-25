@@ -29,7 +29,7 @@
     mode: '0644'
   become: true
 
-- name: Copy garage setup file (1)
+- name: Copy garage setup file (2)
   ansible.builtin.copy:
     src: ./configs/setup-garage-bucket.sh
     dest: /home/lorenzo/configs/setup-garage-bucket.sh
@@ -62,6 +62,33 @@
        DB_NAME="{{ LOMNIA_PG_DEFAULT_DB }}"
 
     mode: '0600'
+
+- name: Copy env var for lomnia ingester
+  copy:
+    dest: /home/lorenzo/configs/.ingester_env
+    content: |
+       S3_ACCESS_KEY_ID="{{ LOMNIA_BE_S3_ACCESS_KEY_ID }}"
+       S3_SECRET_ACCESS_KEY="{{ LOMNIA_BE_S3_SECRET_ACCESS_KEY }}"
+       S3_REGION_NAME="{{ LOMNIA_BE_S3_REGION }}"
+       S3_BUCKET_NAME="{{ LOMNIA_INGESTER_S3_BUCKET }}"
+       S3_URL="{{ LOMNIA_BE_S3_SERVER_URL }}"
+       
+       QUEUE_URL="{{ LOMNIA_BE_AMQP_URL }}"
+       QUEUE_NAME="{{ LOMNIA_BE_INGESTER_QUEUE_NAME }}"
+       
+       PLUGINS_REGISTRY_PATH="/config/plugins.yaml"
+       
+       STORE_PATH="/ingester_data"
+
+    mode: '0600'
+
+- name: Copy plugins file for ingester
+  ansible.builtin.copy:
+    src: ./configs/plugins.yaml
+    dest: /home/lorenzo/configs/plugins.yaml
+    owner: lorenzo
+    mode: '0644'
+  become: true
 
 - name: Copy env var for lomnia rabbitmq 
   copy:

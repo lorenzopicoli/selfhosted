@@ -1,0 +1,21 @@
+plugins:
+  - repo: https://github.com/lorenzopicoli/lomnia-plugins.git
+    folder: owntracks-recorder
+    id: owntracks-recorder
+    env:
+      OWNTRACKS_USER: owntracks
+      OWNTRACKS_DEVICE: shiba
+      OWNTRACKS_URL: http://192.168.40.37:8083
+    run_on_startup: true
+    initial_date: 2025-01-01T00:00:00Z
+    schedule:
+      interval_minutes: 5
+  - repo: https://github.com/lorenzopicoli/lomnia-plugins.git
+    folder: legacy-locations
+    id: legacy-locations
+    env:
+      DEVICE: shiba
+      SKIP_SCHEMA_CHECK: true
+    run_on_startup: false
+    initial_date: 1997-01-01T00:00:00Z
+
