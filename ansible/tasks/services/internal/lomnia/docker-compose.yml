@@ -6,6 +6,10 @@ services:
     ports:
       - '3010:3010'
     restart: unless-stopped
+    # Was having errors with OpenMeteo calls: https://github.com/nodejs/undici/issues/2777
+    sysctls:
+      net.ipv6.conf.all.disable_ipv6: "1"
+      net.ipv6.conf.default.disable_ipv6: "1"
     env_file:
       - /home/lorenzo/configs/.be_env
   frontend:

@@ -9,7 +9,7 @@ plugins:
     run_on_startup: true
     initial_date: 2025-01-01T00:00:00Z
     schedule:
-      interval_minutes: 5
+      interval_minutes: 15
   - repo: https://github.com/lorenzopicoli/lomnia-plugins.git
     folder: legacy-locations
     id: legacy-locations
