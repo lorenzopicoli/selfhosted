@@ -1,6 +1,3 @@
-[submodule "ansible/tasks/services/internal/location-tracker/project"]
-	path = ansible/tasks/services/internal/location-tracker/project
-	url = https://github.com/lorenzopicoli/location-tracker
 [submodule "ansible/tasks/services/internal/lofinance/project"]
-	path = ansible/tasks/services/internal/lofinance/project
+	path = tasks/services/internal/lofinance/project
 	url = git@github.com:lorenzopicoli/lofinance.git

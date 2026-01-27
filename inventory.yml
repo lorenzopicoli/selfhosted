@@ -21,11 +21,6 @@ homelab:
       ansible_user: lorenzo
       ansible_architecture: amd64
       ansible_distribution: debian
-    l-tracker:
-      ansible_host: 192.168.40.27
-      ansible_user: lorenzo
-      ansible_architecture: amd64
-      ansible_distribution: debian
     forgejo:
       ansible_host: 192.168.40.16
       ansible_user: lorenzo
