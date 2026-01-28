@@ -18,4 +18,12 @@ plugins:
       SKIP_SCHEMA_CHECK: true
     run_on_startup: false
     initial_date: 1997-01-01T00:00:00Z
+  - repo: https://github.com/lorenzopicoli/lomnia-plugins.git
+    folder: hares 
+    id: hares
+    env:
+      SKIP_SCHEMA_CHECK: false
+    run_on_startup: false
+    initial_date: 1997-01-01T00:00:00Z
+
 
