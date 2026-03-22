@@ -37,11 +37,9 @@ plugins:
     id: firefox
     run_on_startup: false
     initial_date: 1997-01-01T00:00:00Z
-
-
-
-
-
-
-
+  - repo: https://github.com/lorenzopicoli/lomnia-plugins.git
+    folder: garmin
+    id: garmin
+    run_on_startup: true
+    initial_date: 2025-05-01T00:00:00Z
 
