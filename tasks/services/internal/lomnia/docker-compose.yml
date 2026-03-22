@@ -75,6 +75,7 @@ services:
   db:
     image: postgis/postgis:18-3.6
     restart: unless-stopped
+    shm_size: 1gb
     ports:
     - '5432:5432'
     env_file:

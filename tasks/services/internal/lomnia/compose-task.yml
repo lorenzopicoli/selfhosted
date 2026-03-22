@@ -66,6 +66,7 @@
 - name: Copy env var for lomnia ingester
   copy:
     dest: /home/lorenzo/configs/.ingester_env
+    mode: '0644'
     content: |
        S3_ACCESS_KEY_ID="{{ LOMNIA_BE_S3_ACCESS_KEY_ID }}"
        S3_SECRET_ACCESS_KEY="{{ LOMNIA_BE_S3_SECRET_ACCESS_KEY }}"
@@ -79,8 +80,9 @@
        PLUGINS_REGISTRY_PATH="/config/plugins.yaml"
        
        STORE_PATH="/ingester_data"
-
-    mode: '0600'
+       GARMIN_USERNAME="{{ LOMNIA_INGESTER_GARMIN_USERNAME }}"
+       GARMIN_EMAIL="{{ LOMNIA_INGESTER_GARMIN_EMAIL }}"
+       GARMIN_PASSWORD="{{ LOMNIA_INGESTER_GARMIN_PASSWORD }}"
 
 - name: Copy plugins file for ingester
   ansible.builtin.copy:

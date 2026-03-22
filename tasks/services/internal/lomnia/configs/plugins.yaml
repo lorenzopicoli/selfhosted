@@ -42,4 +42,5 @@ plugins:
     id: garmin
     run_on_startup: true
     initial_date: 2025-05-01T00:00:00Z
-
+    schedule:
+      interval_days: 1
