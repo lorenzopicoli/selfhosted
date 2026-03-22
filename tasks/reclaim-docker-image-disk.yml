@@ -1,0 +1,8 @@
+- name: Prune unused Docker images
+  become: true
+  ansible.builtin.command: docker image prune -a -f
+  register: prune_output
+
+- name: Show reclaimed space
+  ansible.builtin.debug:
+    var: prune_output.stdout

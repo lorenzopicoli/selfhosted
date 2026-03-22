@@ -1,0 +1,10 @@
+- name: Reclaim space in all machines
+  hosts: all
+  strategy: free
+  become: true
+  vars:
+    username: lorenzo
+    device_type: normal
+  tasks:
+    - name: Reclaim space
+      ansible.builtin.include_tasks: tasks/reclaim-docker-image-disk.yml
