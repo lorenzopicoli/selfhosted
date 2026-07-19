@@ -26,12 +26,13 @@
       ansible.builtin.include_tasks: "tasks/services/external/{{ item }}/compose-task.yml"
       loop:
         - traefik
-        - spotify
+        - mcvolei
+        # - spotify
 
-    - name: Deploy radioactive internal docker apps
-      ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
-      loop:
-        - dozzle-agent
+    # - name: Deploy radioactive internal docker apps
+    #   ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
+    #   loop:
+    #     - dozzle-agent
     
     - name: Setup for Traefik
       ansible.builtin.include_tasks: tasks/traefik-acme-perm.yml

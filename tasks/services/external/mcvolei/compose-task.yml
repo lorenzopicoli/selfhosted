@@ -1,0 +1,67 @@
+---
+- name: Ensure configs dir exists
+  file:
+    path: /home/lorenzo/configs/mcvolei
+    state: directory
+
+- name: Ensure docker dir exists
+  file:
+    path: /home/lorenzo/.docker
+    state: directory
+
+- name: Copy compose file with owner and permissions
+  ansible.builtin.copy:
+    src: ./docker-compose.yml
+    dest: /home/lorenzo/configs/mcvolei/docker-compose.yml
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
+- name: Copy GH credentials
+  copy:
+    dest: /root/.docker/config.json
+    content: |
+      {
+        "auths": {
+          "ghcr.io": {
+            "auth": "{{ (GHCR_USERNAME ~ ':' ~ GHCR_TOKEN) | b64encode }}"
+          }
+        }
+      }
+    owner: lorenzo
+    mode: '0600'
+
+- name: Copy env var for docker compose
+  copy:
+    dest: /home/lorenzo/configs/mcvolei/.be_env
+    content: |
+       DATABASE_URL="{{ MCVOLEI_DB_URL }}" 
+
+    mode: '0600'
+
+- name: Copy env var for docker compose (db)
+  copy:
+    dest: /home/lorenzo/configs/mcvolei/.db_env
+    content: |
+      POSTGRES_USER="{{ MCVOLEI_DB_USER }}" 
+      POSTGRES_PASSWORD="{{ MCVOLEI_DB_PASSWORD }}" 
+      POSTGRES_DB="{{ MCVOLEI_DB_DB }}" 
+    mode: '0600'
+
+- name: Copy env var for docker compose (fe)
+  copy:
+    dest: /home/lorenzo/configs/mcvolei/.fe_env
+    content: |
+      API_URL=api.mcvolei.udjaiahs.com
+    mode: '0600'
+
+
+- name: Start mcovolei container
+  community.docker.docker_compose_v2:
+    project_name: mcvolei
+    build: always
+    project_src: '/home/lorenzo/configs/mcvolei'
+  register: output
+
+- ansible.builtin.debug:
+    var: output

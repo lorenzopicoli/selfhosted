@@ -1,0 +1,67 @@
+networks:
+  web:
+    external: true
+services:
+  frontend:
+    container_name: frontend-web
+    restart: unless-stopped
+    pull_policy: always
+    image: ghcr.io/mateusantonio/score-tracker-frontend:latest
+    depends_on:
+      backend:
+        condition: service_started
+    env_file:
+      - /home/lorenzo/configs/mcvolei/.fe_env
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mcvolei.rule=Host(`mcvolei.udjaiahs.com`)"
+      - "traefik.http.routers.mcvolei.tls.certresolver=lets-encrypt"
+      - "traefik.http.routers.mcvolei.entrypoints=websecure"
+
+  backend:
+    container_name: backend
+    restart: unless-stopped
+    pull_policy: always
+    image: ghcr.io/mateusantonio/score-tracker-backend:latest
+    depends_on:
+      database:
+        condition: service_healthy
+    env_file:
+      - /home/lorenzo/configs/mcvolei/.be_env
+    # environment:
+    #   - DATABASE_URL=postgres://postgres:postgres@database:5432/postgres
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.apiMcVolei.rule=Host(`api.mcvolei.udjaiahs.com`)"
+      - "traefik.http.routers.apiMcVolei.tls.certresolver=lets-encrypt"
+      - "traefik.http.services.backend.loadbalancer.server.port=4000"
+      - "traefik.http.routers.apiMcVolei.entrypoints=websecure"
+
+  database:
+    container_name: database
+    restart: unless-stopped
+    image: postgres:15.12
+    env_file:
+      - /home/lorenzo/configs/mcvolei/.db_env
+    # environment:
+    #   - POSTGRES_USER=postgres
+    #   - POSTGRES_PASSWORD=postgres
+      # - POSTGRES_DB=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "psql -U postgres -d postgres -c 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - web
+    volumes:
+      - local_data:/var/lib/postgresql/data
+  
+
+volumes:
+  local_data:
+
