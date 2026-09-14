@@ -12,6 +12,14 @@
     mode: '0644'
   become: true
 
+- name: Copy Docker build requirements
+  ansible.builtin.copy:
+    src: ./project/requirements.txt
+    dest: /home/lorenzo/configs/requirements.txt
+    owner: lorenzo
+    mode: '0644'
+  become: true
+
 - name: Copy docker compose file with owner and permissions
   ansible.builtin.copy:
     src: ./docker-compose.yml
