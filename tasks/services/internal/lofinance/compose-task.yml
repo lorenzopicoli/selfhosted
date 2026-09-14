@@ -38,21 +38,19 @@
       GIT_NAME="{{ LOFINANCE_GIT_NAME }}"
       GIT_EMAIL="{{ LOFINANCE_GIT_EMAIL }}"
       BEANCOUNT_FILE=/beans/main.beancount
-      USE_HTTPS=true
+      USE_HTTPS=false
 
     mode: '0600'
 
-
 - name: Start lofinance container
   community.docker.docker_compose_v2:
-    project_name: lofinance 
+    project_name: lofinance
     build: always
     project_src: '/home/lorenzo/configs'
   register: output
 
 - ansible.builtin.debug:
     var: output
-
 # This assertion isn't working
 # - ansible.builtin.assert:
 #     that:
