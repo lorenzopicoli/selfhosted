@@ -5,7 +5,7 @@ volumes:
 
 services:
   vaultwarden:
-    image: vaultwarden/server:1.35.4-alpine
+    image: vaultwarden/server:1.37.1-alpine
     container_name: vaultwarden
     restart: unless-stopped
     volumes:
