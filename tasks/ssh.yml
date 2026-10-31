@@ -2,6 +2,11 @@
 # https://www.digitalocean.com/community/tutorials/how-to-use-ansible-to-automate-initial-server-setup-on-ubuntu-22-04#step-8-reviewing-your-complete-playbook
 ---
 
+- name: Maintain an existing Docker APT repository before refreshing packages
+  ansible.builtin.include_tasks: configure-docker-apt-repository.yml
+  vars:
+    docker_repository_codename: "{{ ansible_facts['distribution_release'] }}"
+
 - name: Install aptitude
   apt:
     name: aptitude
@@ -54,6 +59,26 @@
       - git
     state: latest
     update_cache: true
+
+- name: Install Debian 13 sysctl defaults
+  ansible.builtin.apt:
+    name: linux-sysctl-defaults
+    state: present
+  when:
+    - ansible_facts['distribution'] == 'Debian'
+    - ansible_facts['distribution_major_version'] | int >= 13
+
+- name: Allow unprivileged ping on Debian 13 and newer
+  ansible.posix.sysctl:
+    name: net.ipv4.ping_group_range
+    value: "0 65535"
+    state: present
+    sysctl_set: true
+    reload: true
+    sysctl_file: /etc/sysctl.d/99-selfhosted-ping.conf
+  when:
+    - ansible_facts['distribution'] == 'Debian'
+    - ansible_facts['distribution_major_version'] | int >= 13
   # # If something changed, restart the ssh service. Without this changes wouldn't apply
   # handlers:
   #  - name: restart ssh

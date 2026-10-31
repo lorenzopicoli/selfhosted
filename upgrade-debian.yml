@@ -1,0 +1,213 @@
+---
+# Upgrade one Debian host to the current stable release (Debian 13 "trixie").
+#
+# Debian only supports upgrades from one release to the next, so a Debian 11
+# host is upgraded to Debian 12, rebooted and verified, and then upgraded to
+# Debian 13. Take a Proxmox snapshot and verify the application backup first.
+#
+# Example for the Vaultwarden LXC:
+#   ansible-playbook -i inventory.yml upgrade-debian.yml \
+#     -e target_host=confidant \
+#     -e confirm_debian_major_upgrade=true
+
+- name: Upgrade one Debian host to Debian 13
+  hosts: "{{ target_host | mandatory }}"
+  become: true
+  gather_facts: true
+  serial: 1
+  any_errors_fatal: true
+
+  vars:
+    confirm_debian_major_upgrade: false
+    debian_upgrade_minimum_free_kb: 2097152
+    debian_upgrade_paths:
+      "11":
+        - from_codename: bullseye
+          from_major: "11"
+          to_codename: bookworm
+          to_major: "12"
+        - from_codename: bookworm
+          from_major: "12"
+          to_codename: trixie
+          to_major: "13"
+      "12":
+        - from_codename: bookworm
+          from_major: "12"
+          to_codename: trixie
+          to_major: "13"
+      "13": []
+
+  pre_tasks:
+    - name: Require a deliberate single-host upgrade
+      ansible.builtin.assert:
+        that:
+          - ansible_play_hosts_all | length == 1
+          - target_host not in ['all', '*', 'homelab']
+          - confirm_debian_major_upgrade | bool
+        fail_msg: >-
+          This playbook upgrades and reboots exactly one host. Take a verified
+          Proxmox snapshot or backup, then pass a specific inventory hostname
+          and -e confirm_debian_major_upgrade=true.
+
+    - name: Verify the installed operating system and supported upgrade path
+      ansible.builtin.assert:
+        that:
+          - ansible_facts['distribution'] == 'Debian'
+          - ansible_facts['distribution_major_version'] in debian_upgrade_paths
+        fail_msg: >-
+          This playbook supports Debian 11, 12 and 13 only. Detected
+          {{ ansible_facts['distribution'] }}
+          {{ ansible_facts['distribution_version'] }}.
+
+    - name: Check the dpkg database
+      ansible.builtin.command:
+        argv:
+          - dpkg
+          - --audit
+      register: debian_upgrade_dpkg_audit
+      changed_when: false
+      failed_when: >-
+        debian_upgrade_dpkg_audit.rc != 0 or
+        debian_upgrade_dpkg_audit.stdout | trim | length > 0
+
+    - name: Check for held packages
+      ansible.builtin.command:
+        argv:
+          - apt-mark
+          - showhold
+      register: debian_upgrade_held_packages
+      changed_when: false
+      failed_when: debian_upgrade_held_packages.stdout | trim | length > 0
+
+    - name: Check free space on the root filesystem
+      ansible.builtin.command:
+        argv:
+          - df
+          - -Pk
+          - /
+      register: debian_upgrade_root_space
+      changed_when: false
+
+    - name: Require at least 2 GiB free on the root filesystem
+      ansible.builtin.assert:
+        that:
+          - (debian_upgrade_root_space.stdout_lines[-1].split()[3] | int) >= debian_upgrade_minimum_free_kb
+        fail_msg: >-
+          At least 2 GiB must be free on /. The host currently has
+          {{ debian_upgrade_root_space.stdout_lines[-1].split()[3] | int }} KiB free.
+
+    - name: Create the pre-upgrade backup directory
+      ansible.builtin.file:
+        path: >-
+          /root/debian-upgrade-{{ ansible_facts['date_time']['iso8601_basic_short'] }}
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+      register: debian_upgrade_backup_directory
+
+    - name: Record installed package selections
+      ansible.builtin.command:
+        argv:
+          - dpkg
+          - --get-selections
+          - "*"
+      register: debian_upgrade_package_selections
+      changed_when: false
+
+    - name: Save installed package selections
+      ansible.builtin.copy:
+        dest: "{{ debian_upgrade_backup_directory.path }}/dpkg-selections.txt"
+        content: "{{ debian_upgrade_package_selections.stdout }}\n"
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Back up APT and dpkg configuration
+      ansible.builtin.command:
+        argv:
+          - tar
+          - -czf
+          - "{{ debian_upgrade_backup_directory.path }}/apt-dpkg-config.tar.gz"
+          - /etc/apt
+          - /var/lib/dpkg
+          - /var/lib/apt/extended_states
+      args:
+        creates: "{{ debian_upgrade_backup_directory.path }}/apt-dpkg-config.tar.gz"
+
+  tasks:
+    - name: Perform each required sequential Debian release upgrade
+      ansible.builtin.include_tasks: tasks/upgrade-debian-release.yml
+      loop: >-
+        {{ debian_upgrade_paths[ansible_facts['distribution_major_version']] }}
+      loop_control:
+        loop_var: debian_upgrade_hop
+        label: >-
+          Debian {{ debian_upgrade_hop.from_major }}
+          to {{ debian_upgrade_hop.to_major }}
+
+    - name: Refresh facts after all release upgrades
+      ansible.builtin.setup:
+
+    - name: Refresh the Docker repository for the installed Debian release
+      ansible.builtin.include_tasks: tasks/configure-docker-apt-repository.yml
+      vars:
+        docker_repository_codename: "{{ ansible_facts['distribution_release'] }}"
+
+    - name: Verify all APT repositories after the release upgrade
+      ansible.builtin.command:
+        argv:
+          - apt-get
+          - update
+          - --allow-releaseinfo-change
+          - -o
+          - APT::Update::Error-Mode=any
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+      changed_when: false
+
+    - name: Install Debian runtime packages required after the upgrade
+      ansible.builtin.command:
+        argv:
+          - apt-get
+          - -y
+          - install
+          - python3-apt
+          - linux-sysctl-defaults
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+        NEEDRESTART_MODE: a
+      register: debian_upgrade_runtime_packages
+      changed_when: >-
+        '0 upgraded, 0 newly installed' not in
+        debian_upgrade_runtime_packages.stdout
+
+    - name: Allow unprivileged ping after the Debian 13 upgrade
+      ansible.posix.sysctl:
+        name: net.ipv4.ping_group_range
+        value: "0 65535"
+        state: present
+        sysctl_set: true
+        reload: true
+        sysctl_file: /etc/sysctl.d/99-selfhosted-ping.conf
+
+    - name: Verify Debian 13 is installed
+      ansible.builtin.assert:
+        that:
+          - ansible_facts['distribution'] == 'Debian'
+          - ansible_facts['distribution_major_version'] == '13'
+        fail_msg: >-
+          Expected Debian 13, but detected
+          {{ ansible_facts['distribution'] }}
+          {{ ansible_facts['distribution_version'] }}.
+
+    - name: Remove downloaded package files
+      ansible.builtin.apt:
+        clean: true
+
+    - name: Report the completed upgrade
+      ansible.builtin.debug:
+        msg: >-
+          {{ inventory_hostname }} is now running Debian
+          {{ ansible_facts['distribution_version'] }}. APT and dpkg configuration was
+          saved under {{ debian_upgrade_backup_directory.path }}.

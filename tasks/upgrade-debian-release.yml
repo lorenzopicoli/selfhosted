@@ -1,0 +1,196 @@
+---
+- name: Verify the expected source release
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] == 'Debian'
+      - ansible_facts['distribution_major_version'] == debian_upgrade_hop.from_major
+    fail_msg: >-
+      Expected Debian {{ debian_upgrade_hop.from_major }} before upgrading to
+      Debian {{ debian_upgrade_hop.to_major }}, but detected
+      {{ ansible_facts['distribution'] }}
+      {{ ansible_facts['distribution_version'] }}.
+
+- name: Refresh the Docker repository for {{ debian_upgrade_hop.from_codename }}
+  ansible.builtin.include_tasks: configure-docker-apt-repository.yml
+  vars:
+    docker_repository_codename: "{{ debian_upgrade_hop.from_codename }}"
+
+- name: Refresh package metadata for {{ debian_upgrade_hop.from_codename }}
+  ansible.builtin.command:
+    argv:
+      - apt-get
+      - update
+      - --allow-releaseinfo-change
+      - -o
+      - APT::Update::Error-Mode=any
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+  changed_when: false
+
+- name: Fully update {{ debian_upgrade_hop.from_codename }} before the release upgrade
+  ansible.builtin.command:
+    argv:
+      - apt-get
+      - -y
+      - -o
+      - Dpkg::Options::=--force-confdef
+      - -o
+      - Dpkg::Options::=--force-confold
+      - full-upgrade
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+    APT_LISTCHANGES_FRONTEND: none
+    NEEDRESTART_MODE: a
+  register: debian_upgrade_current_release
+  changed_when: "'0 upgraded, 0 newly installed' not in debian_upgrade_current_release.stdout"
+
+- name: Find APT source fragments
+  ansible.builtin.find:
+    paths: /etc/apt/sources.list.d
+    patterns:
+      - "*.list"
+      - "*.sources"
+    file_type: file
+    recurse: false
+  register: debian_upgrade_source_fragments
+
+- name: Check for the main APT sources file
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list
+  register: debian_upgrade_main_sources
+
+- name: Build the list of APT source files
+  ansible.builtin.set_fact:
+    debian_upgrade_source_files: >-
+      {{
+        (['/etc/apt/sources.list'] if debian_upgrade_main_sources.stat.exists else [])
+        + (debian_upgrade_source_fragments.files | map(attribute='path') | list)
+      }}
+
+- name: Check for release aliases and backports in APT sources
+  ansible.builtin.command:
+    argv:
+      - grep
+      - -E
+      - "^[[:space:]]*(deb(-src)?[[:space:]]+(\\[[^]]+\\][[:space:]]+)?[^[:space:]]+[[:space:]]+(stable|oldstable|oldoldstable|testing|unstable|[^[:space:]]+-backports)([[:space:]]|$)|Suites:[[:space:]].*(stable|oldstable|oldoldstable|testing|unstable|[^[:space:]]+-backports)([[:space:]]|$))"
+      - "{{ item }}"
+  loop: "{{ debian_upgrade_source_files }}"
+  loop_control:
+    label: "{{ item }}"
+  register: debian_upgrade_unsafe_source_names
+  changed_when: false
+  failed_when: false
+
+- name: Require codename-based APT sources without backports
+  ansible.builtin.assert:
+    that:
+      - >-
+        debian_upgrade_unsafe_source_names.results
+        | selectattr('rc', 'equalto', 0)
+        | list
+        | length == 0
+    fail_msg: >-
+      An APT source uses a moving release alias or a backports suite. Replace
+      it with the current codename {{ debian_upgrade_hop.from_codename }}, or
+      disable that source before running a major release upgrade.
+
+- name: Point APT sources at {{ debian_upgrade_hop.to_codename }}
+  ansible.builtin.replace:
+    path: "{{ item }}"
+    regexp: "\\b{{ debian_upgrade_hop.from_codename }}\\b"
+    replace: "{{ debian_upgrade_hop.to_codename }}"
+    backup: true
+  loop: "{{ debian_upgrade_source_files }}"
+  loop_control:
+    label: "{{ item }}"
+  register: debian_upgrade_source_rewrites
+
+- name: Verify at least one APT source was moved to the next release
+  ansible.builtin.assert:
+    that:
+      - >-
+        debian_upgrade_source_rewrites.results
+        | selectattr('changed', 'equalto', true)
+        | list
+        | length > 0
+    fail_msg: >-
+      No APT source referenced {{ debian_upgrade_hop.from_codename }}. The
+      playbook stopped to avoid skipping a Debian release. Inspect the files
+      under /etc/apt and use explicit Debian codenames.
+
+- name: Refresh the Docker repository for {{ debian_upgrade_hop.to_codename }}
+  ansible.builtin.include_tasks: configure-docker-apt-repository.yml
+  vars:
+    docker_repository_codename: "{{ debian_upgrade_hop.to_codename }}"
+
+- name: Refresh package metadata for {{ debian_upgrade_hop.to_codename }}
+  ansible.builtin.command:
+    argv:
+      - apt-get
+      - update
+      - --allow-releaseinfo-change
+      - -o
+      - APT::Update::Error-Mode=any
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+  changed_when: false
+
+- name: Perform the minimal upgrade to Debian {{ debian_upgrade_hop.to_major }}
+  ansible.builtin.command:
+    argv:
+      - apt-get
+      - -y
+      - -o
+      - Dpkg::Options::=--force-confdef
+      - -o
+      - Dpkg::Options::=--force-confold
+      - upgrade
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+    APT_LISTCHANGES_FRONTEND: none
+    NEEDRESTART_MODE: a
+  register: debian_upgrade_minimal
+  changed_when: "'0 upgraded, 0 newly installed' not in debian_upgrade_minimal.stdout"
+
+- name: Perform the full upgrade to Debian {{ debian_upgrade_hop.to_major }}
+  ansible.builtin.command:
+    argv:
+      - apt-get
+      - -y
+      - -o
+      - Dpkg::Options::=--force-confdef
+      - -o
+      - Dpkg::Options::=--force-confold
+      - full-upgrade
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+    APT_LISTCHANGES_FRONTEND: none
+    NEEDRESTART_MODE: a
+  register: debian_upgrade_full
+  changed_when: "'0 upgraded, 0 newly installed' not in debian_upgrade_full.stdout"
+
+- name: Reboot after upgrading to Debian {{ debian_upgrade_hop.to_major }}
+  ansible.builtin.reboot:
+    msg: >-
+      Rebooting after the Debian {{ debian_upgrade_hop.to_major }} release upgrade
+    connect_timeout: 20
+    reboot_timeout: 1200
+    pre_reboot_delay: 5
+    post_reboot_delay: 20
+    test_command: cat /etc/debian_version
+
+- name: Reset the SSH connection after the reboot
+  ansible.builtin.meta: reset_connection
+
+- name: Refresh facts after upgrading to Debian {{ debian_upgrade_hop.to_major }}
+  ansible.builtin.setup:
+
+- name: Verify the completed Debian {{ debian_upgrade_hop.to_major }} hop
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['distribution'] == 'Debian'
+      - ansible_facts['distribution_major_version'] == debian_upgrade_hop.to_major
+    fail_msg: >-
+      The release upgrade did not reach Debian {{ debian_upgrade_hop.to_major }}.
+      Detected {{ ansible_facts['distribution'] }}
+      {{ ansible_facts['distribution_version'] }}.
