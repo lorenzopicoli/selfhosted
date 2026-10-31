@@ -1,5 +1,3 @@
-version: '3.8'
-
 volumes:
   vaultwarden:
 
@@ -15,3 +13,27 @@ services:
     ports:
       - '3012:3012'
       - '80:80'
+
+  backrest:
+    image: ghcr.io/garethgeorge/backrest:v1.14.1-alpine
+    container_name: backrest
+    hostname: vaultwarden
+    restart: unless-stopped
+    env_file:
+      - /home/lorenzo/configs/backrest/.env
+    environment:
+      BACKREST_DATA: /data
+      BACKREST_CONFIG: /config/config.json
+      XDG_CACHE_HOME: /cache
+      TMPDIR: /tmp
+      TZ: America/Toronto
+    volumes:
+      - /home/lorenzo/configs/backrest/data:/data
+      - /home/lorenzo/configs/backrest/config:/config
+      - /home/lorenzo/configs/backrest/cache:/cache
+      - /home/lorenzo/configs/backrest/tmp:/tmp
+      - vaultwarden:/sources/vaultwarden:ro
+      - /var/lib/selfhosted-backup/vaultwarden:/exports/vaultwarden:ro
+      - /var/lib/selfhosted-restore:/restore
+    ports:
+      - '9898:9898'

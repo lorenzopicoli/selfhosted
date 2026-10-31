@@ -1,0 +1,110 @@
+---
+- name: Check bamanager variables
+  ansible.builtin.assert:
+    that:
+      - backup_b2_bucket | default('') | length > 0
+      - backup_b2_writer_key_id | default('') | length > 0
+      - backup_b2_writer_application_key | default('') | length > 0
+      - backup_b2_admin_key_id | default('') | length > 0
+      - backup_b2_admin_application_key | default('') | length > 0
+      - backup_gateway_vaultwarden_password | default('') | length > 0
+      - backup_gateway_forgejo_password | default('') | length > 0
+    fail_msg: Add the B2 and backup gateway variables documented in BACKUPS.md to env_vars.yml.
+  no_log: true
+
+- name: Install htpasswd support
+  ansible.builtin.apt:
+    name:
+      - python3-bcrypt
+      - python3-passlib
+    state: present
+    update_cache: true
+
+- name: Create bamanager directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: /home/lorenzo/configs/bamanager, owner: lorenzo, group: lorenzo, mode: '0700' }
+    - { path: /home/lorenzo/configs/bamanager/backrest/data, mode: '0700' }
+    - { path: /home/lorenzo/configs/bamanager/backrest/config, mode: '0700' }
+    - { path: /home/lorenzo/configs/bamanager/backrest/cache, mode: '0700' }
+    - { path: /home/lorenzo/configs/bamanager/backrest/tmp, mode: '0700' }
+    - { path: /home/lorenzo/configs/bamanager/rclone-writer, mode: '0700' }
+    - { path: /home/lorenzo/configs/bamanager/rclone-admin, mode: '0700' }
+    - { path: /var/lib/selfhosted-restore, mode: '0700' }
+
+- name: Copy bamanager Compose file
+  ansible.builtin.copy:
+    src: ./docker-compose.yml
+    dest: /home/lorenzo/configs/bamanager/docker-compose.yml
+    owner: lorenzo
+    group: lorenzo
+    mode: '0644'
+
+- name: Write bamanager Compose environment
+  ansible.builtin.copy:
+    dest: /home/lorenzo/configs/bamanager/.env
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      BACKUP_B2_BUCKET={{ backup_b2_bucket }}
+
+- name: Write append-only B2 rclone configuration
+  ansible.builtin.copy:
+    dest: /home/lorenzo/configs/bamanager/rclone-writer/rclone.conf
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      [b2-writer]
+      type = b2
+      account = {{ backup_b2_writer_key_id }}
+      key = {{ backup_b2_writer_application_key }}
+  no_log: true
+
+- name: Write administrative B2 rclone configuration
+  ansible.builtin.copy:
+    dest: /home/lorenzo/configs/bamanager/rclone-admin/rclone.conf
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      [b2-admin]
+      type = b2
+      account = {{ backup_b2_admin_key_id }}
+      key = {{ backup_b2_admin_application_key }}
+      hard_delete = true
+  no_log: true
+
+- name: Create backup gateway logins
+  community.general.htpasswd:
+    path: /home/lorenzo/configs/bamanager/rclone-writer/htpasswd
+    name: "{{ item.username }}"
+    password: "{{ item.password }}"
+    crypt_scheme: bcrypt
+    owner: root
+    group: root
+    mode: '0600'
+  loop:
+    - username: vaultwarden
+      password: "{{ backup_gateway_vaultwarden_password }}"
+    - username: forgejo
+      password: "{{ backup_gateway_forgejo_password }}"
+  loop_control:
+    label: "{{ item.username }}"
+  no_log: true
+
+- name: Start bamanager containers
+  community.docker.docker_compose_v2:
+    project_name: bamanager
+    project_src: /home/lorenzo/configs/bamanager
+  register: bamanager_compose
+
+- name: Show bamanager Compose changes
+  ansible.builtin.debug:
+    var: bamanager_compose.actions

@@ -1,0 +1,50 @@
+---
+- name: Check backup agent variables
+  ansible.builtin.assert:
+    that:
+      - backup_gateway_username | default('') | length > 0
+      - backup_gateway_password | default('') | length > 0
+      - backup_backrest_api_user | default('') | length > 0
+      - backup_backrest_api_password | default('') | length > 0
+    fail_msg: Add the backup gateway and Backrest API credentials to env_vars.yml.
+  no_log: true
+
+- name: Create backup agent directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: /home/lorenzo/configs/backrest, owner: lorenzo, group: lorenzo, mode: '0700' }
+    - { path: /home/lorenzo/configs/backrest/data, mode: '0700' }
+    - { path: /home/lorenzo/configs/backrest/config, mode: '0700' }
+    - { path: /home/lorenzo/configs/backrest/cache, mode: '0700' }
+    - { path: /home/lorenzo/configs/backrest/tmp, mode: '0700' }
+    - { path: /etc/selfhosted-backup, mode: '0700' }
+    - { path: /var/lib/selfhosted-backup, mode: '0700' }
+    - { path: /var/lib/selfhosted-restore, mode: '0700' }
+
+- name: Write backup gateway credentials for Backrest
+  ansible.builtin.copy:
+    dest: /home/lorenzo/configs/backrest/.env
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      RESTIC_REST_USERNAME={{ backup_gateway_username | to_json }}
+      RESTIC_REST_PASSWORD={{ backup_gateway_password | to_json }}
+  no_log: true
+
+- name: Write local Backrest API credentials
+  ansible.builtin.copy:
+    dest: /etc/selfhosted-backup/backrest-api.env
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      BACKREST_API_URL=http://127.0.0.1:9898
+      BACKREST_API_USER={{ backup_backrest_api_user | quote }}
+      BACKREST_API_PASSWORD={{ backup_backrest_api_password | quote }}
+  no_log: true

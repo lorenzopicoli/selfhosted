@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+# Prevent a timer and a manual run from backing up at the same time.
+exec 9>/run/lock/backup-vaultwarden.lock
+flock --nonblock 9 || { echo "Vaultwarden backup is already running" >&2; exit 1; }
+
+# Root-only credentials for calling the local Backrest API.
+source /etc/selfhosted-backup/backrest-api.env
+
+export_dir=/var/lib/selfhosted-backup/vaultwarden
+mkdir -p "$export_dir"
+
+# Find the host path of the Docker volume mounted at /data in Vaultwarden.
+data_dir=$(docker inspect --format '{{ range .Mounts }}{{ if eq .Destination "/data" }}{{ .Source }}{{ end }}{{ end }}' vaultwarden)
+if [[ -z "$data_dir" || ! -f "$data_dir/db.sqlite3" ]]; then
+  echo "Could not find Vaultwarden's db.sqlite3" >&2
+  exit 1
+fi
+
+tmp=$(mktemp "$export_dir/.db.sqlite3.XXXXXX")
+cleanup() { [[ -z "$tmp" ]] || rm -f "$tmp"; }
+trap cleanup EXIT
+
+# SQLite's online backup command creates a consistent copy while Vaultwarden runs.
+sqlite3 "$data_dir/db.sqlite3" ".backup '$tmp'"
+# Do not upload the copy unless SQLite can read and validate it successfully.
+if [[ $(sqlite3 "$tmp" 'PRAGMA integrity_check;') != ok ]]; then
+  echo "Vaultwarden SQLite integrity check failed" >&2
+  exit 1
+fi
+
+chmod 0600 "$tmp"
+# Replace the previous export atomically, so Backrest never sees a partial file.
+mv -f "$tmp" "$export_dir/db.sqlite3"
+tmp=
+
+# Record when this export was made and a checksum useful during restore testing.
+{
+  printf 'created_at=%s\n' "$(date --iso-8601=seconds)"
+  sha256sum "$export_dir/db.sqlite3"
+} > "$export_dir/manifest.txt"
+chmod 0600 "$export_dir/manifest.txt"
+
+# Trigger the plan named "vaultwarden". This request returns when backup ends.
+curl --fail --silent --show-error \
+  --user "$BACKREST_API_USER:$BACKREST_API_PASSWORD" \
+  --header 'Content-Type: application/json' \
+  --data '{"value":"vaultwarden"}' \
+  "$BACKREST_API_URL/v1.Backrest/Backup"

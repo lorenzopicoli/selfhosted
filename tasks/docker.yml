@@ -22,7 +22,6 @@
       - apt-transport-https
       - ca-certificates
       - curl
-      - software-properties-common
       - python3-pip
       - virtualenv
       - python3-setuptools
@@ -30,17 +29,11 @@
     update_cache: true
   when: "docker_command_result.rc == 1"
 
-- name: Add Docker GPG apt Key
-  apt_key:
-    url: https://download.docker.com/linux/debian/gpg
-    state: present
-  when: "docker_command_result.rc == 1"
-
-- name: Add Docker Repository
-  apt_repository:
-    repo: "deb https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
-    state: present
-  when: "docker_command_result.rc == 1"
+- name: Maintain Docker's APT key and repository
+  ansible.builtin.include_tasks: configure-docker-apt-repository.yml
+  vars:
+    docker_repository_codename: "{{ ansible_facts['distribution_release'] }}"
+    docker_repository_force: true
 
 - name: Update apt and install docker-ce
   apt:

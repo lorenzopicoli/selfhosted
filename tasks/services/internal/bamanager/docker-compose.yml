@@ -1,0 +1,41 @@
+services:
+  backrest-manager:
+    image: ghcr.io/garethgeorge/backrest:v1.14.1-alpine
+    container_name: backrest-manager
+    hostname: bamanager
+    restart: unless-stopped
+    environment:
+      BACKREST_DATA: /data
+      BACKREST_CONFIG: /config/config.json
+      XDG_CACHE_HOME: /cache
+      TMPDIR: /tmp
+      TZ: America/Toronto
+    volumes:
+      - /home/lorenzo/configs/bamanager/backrest/data:/data
+      - /home/lorenzo/configs/bamanager/backrest/config:/config
+      - /home/lorenzo/configs/bamanager/backrest/cache:/cache
+      - /home/lorenzo/configs/bamanager/backrest/tmp:/tmp
+      - /home/lorenzo/configs/bamanager/backrest/config:/sources/bamanager-config:ro
+      - /home/lorenzo/configs/bamanager/rclone-admin/rclone.conf:/root/.config/rclone/rclone.conf:ro
+      - /var/lib/selfhosted-restore:/restore
+    ports:
+      - "192.168.40.20:9898:9898"
+
+  restic-gateway:
+    image: rclone/rclone:1.75.2
+    container_name: restic-gateway
+    restart: unless-stopped
+    command:
+      - serve
+      - restic
+      - b2-writer:${BACKUP_B2_BUCKET}
+      - --config=/config/rclone.conf
+      - --addr=:8080
+      - --append-only
+      - --private-repos
+      - --htpasswd=/config/htpasswd
+      - --log-level=INFO
+    volumes:
+      - /home/lorenzo/configs/bamanager/rclone-writer:/config:ro
+    ports:
+      - "192.168.40.20:8080:8080"

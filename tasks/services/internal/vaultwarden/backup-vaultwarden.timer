@@ -1,0 +1,11 @@
+[Unit]
+Description=Nightly Vaultwarden backup
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+RandomizedDelaySec=5m
+Unit=backup-vaultwarden.service
+
+[Install]
+WantedBy=timers.target
