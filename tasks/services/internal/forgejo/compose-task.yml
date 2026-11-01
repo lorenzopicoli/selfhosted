@@ -4,6 +4,20 @@
     path: /home/lorenzo/configs
     state: directory
 
+- name: Install Forgejo backup tools
+  ansible.builtin.apt:
+    name: curl
+    state: present
+    update_cache: true
+
+- name: Create Forgejo export directory
+  ansible.builtin.file:
+    path: /var/lib/selfhosted-backup/forgejo
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
 - name: Copy compose file with owner and permissions
   ansible.builtin.copy:
     src: ./docker-compose.yml
@@ -43,13 +57,42 @@
 
 - name: Start forgejo container
   community.docker.docker_compose_v2:
-    project_name: forgejo 
+    project_name: forgejo
     build: always
     project_src: '/home/lorenzo/configs'
   register: output
 
 - ansible.builtin.debug:
     var: output
+
+- name: Install Forgejo backup script
+  ansible.builtin.copy:
+    src: ./backup-forgejo
+    dest: /usr/local/sbin/backup-forgejo
+    owner: root
+    group: root
+    mode: '0750'
+
+- name: Install Forgejo backup systemd units
+  ansible.builtin.copy:
+    src: "./{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - backup-forgejo.service
+    - backup-forgejo.timer
+
+- name: Reload systemd units
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Enable and start Forgejo backup timer
+  ansible.builtin.systemd_service:
+    name: backup-forgejo.timer
+    enabled: true
+    state: started
 
 # This assertion isn't working
 # - ansible.builtin.assert:

@@ -5,6 +5,8 @@
   vars:
     username: lorenzo
     device_type: normal
+    backup_gateway_username: forgejo
+    backup_gateway_password: "{{ backup_gateway_forgejo_password }}"
   vars_files:
     - env_vars.yml
 
@@ -17,18 +19,19 @@
 
     - name: Install docker
       ansible.builtin.include_tasks: tasks/docker.yml
-    
+
     - name: Install docker compose
       ansible.builtin.include_tasks: tasks/install-compose.yml
-    
+
     - name: Deploy forgejo docker apps
       ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
       loop:
+        - backup-agent
         - forgejo
         - dozzle-agent
 
     - name: Setup for Active Backup
       ansible.builtin.include_tasks: tasks/setup-rsync-backup.yml
-    
+
     - name: Reclaim image space
       ansible.builtin.include_tasks: tasks/reclaim-docker-image-disk.yml

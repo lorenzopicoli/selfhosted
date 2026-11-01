@@ -1,0 +1,12 @@
+[Unit]
+Description=Create and upload a Forgejo backup
+Wants=network-online.target
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/backup-forgejo
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=infinity
