@@ -4,6 +4,14 @@
     path: /home/lorenzo/configs
     state: directory
 
+- name: Ensure PostgreSQL 18 data directory exists
+  ansible.builtin.file:
+    path: /users/lorenzo/home/forgejo_pg18
+    state: directory
+    owner: '999'
+    group: root
+    mode: '0700'
+
 - name: Install Forgejo backup tools
   ansible.builtin.apt:
     name: curl
