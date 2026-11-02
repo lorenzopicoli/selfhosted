@@ -16,6 +16,7 @@ services:
     volumes:
       - docker_certs:/certs
       - docker_data:/var/lib/docker
+      - ./docker-daemon.json:/etc/docker/daemon.json:ro
     healthcheck:
       test: [CMD, docker, --host, unix:///var/run/docker.sock, info]
       interval: 10s

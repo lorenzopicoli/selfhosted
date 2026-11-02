@@ -1,0 +1,11 @@
+[Unit]
+Description=Nightly Forgejo runner Docker cleanup
+
+[Timer]
+OnCalendar=*-*-* 04:00:00
+Persistent=true
+RandomizedDelaySec=15m
+Unit=forgejo-runner-cleanup.service
+
+[Install]
+WantedBy=timers.target

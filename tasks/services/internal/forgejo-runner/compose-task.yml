@@ -37,13 +37,42 @@
     mode: '0600'
   no_log: true
 
+- name: Install nested Docker daemon configuration
+  ansible.builtin.copy:
+    src: ./docker-daemon.json
+    dest: /home/lorenzo/configs/forgejo-runner/docker-daemon.json
+    owner: root
+    group: root
+    mode: '0644'
+  register: forgejo_runner_docker_config
+
 - name: Start Forgejo runner containers
   community.docker.docker_compose_v2:
     project_name: forgejo-runner
     project_src: /home/lorenzo/configs/forgejo-runner
     pull: missing
+    # Compose does not detect changes to the contents of bind-mounted files.
+    recreate: "{{ 'always' if forgejo_runner_docker_config.changed else 'auto' }}"
   register: forgejo_runner_compose
 
 - name: Show Forgejo runner Compose changes
   ansible.builtin.debug:
     var: forgejo_runner_compose.actions
+
+- name: Install Forgejo runner cleanup systemd units
+  ansible.builtin.copy:
+    src: "./{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - forgejo-runner-cleanup.service
+    - forgejo-runner-cleanup.timer
+
+- name: Enable and start Forgejo runner cleanup timer
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+    name: forgejo-runner-cleanup.timer
+    enabled: true
+    state: started
