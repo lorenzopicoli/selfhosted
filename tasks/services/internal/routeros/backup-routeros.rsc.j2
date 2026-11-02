@@ -1,0 +1,58 @@
+# Managed by Ansible. Run through /system/script/run backup-routeros.
+:local backupPassword {{ ROUTEROS_BACKUP_PASSWORD | to_json(ensure_ascii=False) | replace('$', '\\$') | replace('?', '\\?') }};
+:local sftpHost {{ hostvars['bamanager'].ansible_host | to_json(ensure_ascii=False) | replace('$', '\\$') | replace('?', '\\?') }};
+:local sftpUser {{ ROUTEROS_BACKUP_SFTP_USERNAME | to_json(ensure_ascii=False) | replace('$', '\\$') | replace('?', '\\?') }};
+:local sftpPassword {{ ROUTEROS_BACKUP_SFTP_PASSWORD | to_json(ensure_ascii=False) | replace('$', '\\$') | replace('?', '\\?') }};
+:local sftpPath {{ ROUTEROS_BACKUP_SFTP_PATH | regex_replace('/+$', '') | to_json(ensure_ascii=False) | replace('$', '\\$') | replace('?', '\\?') }};
+:local sftpPort {{ ROUTEROS_BACKUP_SFTP_PORT | int }};
+
+# Count running jobs instead of leaving a global lock behind after a failure.
+:if ([/system/script/job/print count-only where script="backup-routeros"] > 1) do={
+    :error "RouterOS backup is already running";
+};
+
+# Refuse unattended transfers that would accept an untrusted SSH host key.
+# Pin the collector's host key before enabling the scheduled backup.
+:if ([/ip/ssh/get known-hosts-validation] != true) do={
+    :error "RouterOS backup requires SFTP host key validation";
+};
+:if ([:len [/ip/ssh/get known-hosts-trusted-subnets]] > 0) do={
+    :error "RouterOS backup requires pinned SFTP host keys without trusted subnet bypasses";
+};
+
+:local fileBase "selfhosted-routeros";
+:local backupFile ($fileBase . ".backup");
+:local exportFile ($fileBase . ".rsc");
+:local runDate [/system/clock/get date];
+:local runTime [/system/clock/get time];
+:local remoteBase ("routeros-" . $runDate . "-" . [:pick $runTime 0 2] . [:pick $runTime 3 5] . [:pick $runTime 6 8]);
+
+:do {
+    # Remove previous files so a failed export can never upload yesterday's data.
+    /file/remove [/file/find where name=$backupFile];
+    /file/remove [/file/find where name=$exportFile];
+
+    /system/backup/save name=$fileBase password=$backupPassword encryption=aes-sha256;
+    /export show-sensitive file=$fileBase;
+
+    :local backupSize [/file/get [/file/find where name=$backupFile] size];
+    :local exportSize [/file/get [/file/find where name=$exportFile] size];
+    :if (($backupSize = 0) || ($exportSize = 0)) do={
+        :error "RouterOS generated an empty backup";
+    };
+
+    /tool/fetch url=("sftp://" . $sftpHost) port=$sftpPort user=$sftpUser password=$sftpPassword \
+        upload=yes src-path=$backupFile dst-path=($sftpPath . "/" . $remoteBase . ".backup");
+    /tool/fetch url=("sftp://" . $sftpHost) port=$sftpPort user=$sftpUser password=$sftpPassword \
+        upload=yes src-path=$exportFile dst-path=($sftpPath . "/" . $remoteBase . ".rsc");
+} on-error={
+    /file/remove [/file/find where name=$backupFile];
+    /file/remove [/file/find where name=$exportFile];
+    :log error "RouterOS backup upload failed";
+    :error "RouterOS backup failed";
+};
+
+# The export contains plaintext secrets. Remove local files after either result.
+/file/remove [/file/find where name=$backupFile];
+/file/remove [/file/find where name=$exportFile];
+:log info "RouterOS backup uploaded successfully";

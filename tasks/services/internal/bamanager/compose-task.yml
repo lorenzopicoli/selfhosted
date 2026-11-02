@@ -1,19 +1,4 @@
 ---
-- name: Check bamanager variables
-  ansible.builtin.assert:
-    that:
-      - BACKUP_B2_BUCKET | default('') | length > 0
-      - BACKUP_B2_WRITER_KEY_ID | default('') | length > 0
-      - BACKUP_B2_WRITER_APPLICATION_KEY | default('') | length > 0
-      - BACKUP_B2_ADMIN_KEY_ID | default('') | length > 0
-      - BACKUP_B2_ADMIN_APPLICATION_KEY | default('') | length > 0
-      - BACKUP_GATEWAY_VAULTWARDEN_PASSWORD | default('') | length > 0
-      - BACKUP_GATEWAY_FORGEJO_PASSWORD | default('') | length > 0
-      - BACKUP_GATEWAY_OWNTRACKS_PASSWORD | default('') | length > 0
-      - BACKUP_GATEWAY_UNIFI_PASSWORD | default('') | length > 0
-    fail_msg: Add the B2 and backup gateway variables documented in BACKUPS.md to env_vars.yml.
-  no_log: true
-
 - name: Install htpasswd support
   ansible.builtin.apt:
     name:
@@ -37,6 +22,7 @@
     - { path: /home/lorenzo/configs/bamanager/backrest/tmp, mode: '0700' }
     - { path: /home/lorenzo/configs/bamanager/rclone-writer, mode: '0700' }
     - { path: /home/lorenzo/configs/bamanager/rclone-admin, mode: '0700' }
+    - { path: /var/lib/selfhosted-backup/uploads, mode: '0700' }
     - { path: /var/lib/selfhosted-restore, mode: '0700' }
 
 - name: Copy bamanager Compose file
@@ -55,6 +41,10 @@
     mode: '0600'
     content: |
       BACKUP_B2_BUCKET={{ BACKUP_B2_BUCKET }}
+      ROUTEROS_BACKUP_SFTP_PORT={{ ROUTEROS_BACKUP_SFTP_PORT }}
+      ROUTEROS_BACKUP_SFTP_USERNAME={{ ROUTEROS_BACKUP_SFTP_USERNAME }}
+      ROUTEROS_BACKUP_SFTP_PASSWORD={{ ROUTEROS_BACKUP_SFTP_PASSWORD | to_json(ensure_ascii=False) | replace('$', '$$') }}
+  no_log: true
 
 - name: Write append-only B2 rclone configuration
   ansible.builtin.copy:

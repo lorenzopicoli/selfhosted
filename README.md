@@ -7,8 +7,8 @@
 | Unifi controller                                     | Yes     | 5.1.42        | Nov 2, 2026  | Container | Working |                                                                                                                                                       |
 | Traefik                                              | Not yet | 3.6.1         | Nov 14, 2025 | Container | Working | Has some logs about using deprecated syntax. Should probably take some time to drop this in favor of npm or npm in favour of traefik across the board |
 | Syncthing                                            | Not yet | 2.0.11        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
-| Technitium                                           | Not yet | 15.4.0        | Mar 22, 2026 | VM        | Working |                                                                                                                                                       |
-| NPM                                                  | Not yet | 2.14.0        | Mar 22, 2026 | VM        | Working |                                                                                                                                                       |
+| Technitium                                           | Not yet | 15.4.0        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
+| NPM                                                  | Not yet | 2.14.0        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
 | Spotify-Mongo                                        | Not yet | 6.0.5         |              | Container | Working | Can't update because of Raspberry Pi's architecture                                                                                                   |
 | Spotify Server                                       | Not yet | 1.14.0        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
 | Spotify Client                                       | Not yet | 1.14.0        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
@@ -27,20 +27,6 @@
 ## General info
 
 Most of the magic happens over /ansible.
-
-### Restricted local application deployments
-
-Application playbooks such as `lofinance.yml` include
-`tasks/local-deployable.yml` to configure deployment from Forgejo Actions. The
-shared public key is forced to run `/usr/local/sbin/local-deploy`; it cannot
-open a shell or forward ports. The command pulls only the configured Compose
-services, waits for readiness, restores their previous images if deployment
-fails, and removes replaced images after a successful deployment.
-
-Store the matching private key once as the user-level Forgejo Actions secret
-`DEPLOY_SSH_KEY`. Private registry credentials are optional for public packages;
-for private packages, add `LOCAL_DEPLOY_REGISTRY_USERNAME` and
-`LOCAL_DEPLOY_REGISTRY_TOKEN` with `read:package` scope to `env_vars.yml`.
 
 My current homelab consists of:
 
@@ -166,8 +152,16 @@ Router has a bridge configured as follows:
     - ether5-WLAN: Does tagging itself
   - Current Untagged: empty
 
-## Wifi
+### Restricted local application deployments
 
-TODO
+Application playbooks such as `lofinance.yml` include
+`tasks/local-deployable.yml` to configure deployment from Forgejo Actions. The
+shared public key is forced to run `/usr/local/sbin/local-deploy`; it cannot
+open a shell or forward ports. The command pulls only the configured Compose
+services, waits for readiness, restores their previous images if deployment
+fails, and removes replaced images after a successful deployment.
 
-## TODOs
+Store the matching private key once as the user-level Forgejo Actions secret
+`DEPLOY_SSH_KEY`. Private registry credentials are optional for public packages;
+for private packages, add `LOCAL_DEPLOY_REGISTRY_USERNAME` and
+`LOCAL_DEPLOY_REGISTRY_TOKEN` with `read:package` scope to `env_vars.yml`.

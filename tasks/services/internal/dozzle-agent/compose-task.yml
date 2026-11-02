@@ -12,7 +12,7 @@
     mode: '0644'
   become: true
 
-- name: Start hoarder container
+- name: Start dozzle agent container
   community.docker.docker_compose_v2:
     project_name: dozzle-agent
     build: always

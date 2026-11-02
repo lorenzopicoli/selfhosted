@@ -1,0 +1,30 @@
+---
+- name: Install RouterOS backup script
+  community.routeros.api_modify:
+    path: system script
+    handle_absent_entries: ignore
+    handle_entries_content: ignore
+    data:
+      - name: backup-routeros
+        comment: Managed by Ansible
+        owner: "{{ ROUTEROS_API_USERNAME }}"
+        policy: ftp,read,write,policy,test,sensitive
+        dont-require-permissions: false
+        source: "{{ lookup('ansible.builtin.template', './backup-routeros.rsc.j2') }}"
+  no_log: true
+  diff: false
+
+- name: Enable RouterOS backup scheduler
+  community.routeros.api_modify:
+    path: system scheduler
+    handle_absent_entries: ignore
+    handle_entries_content: ignore
+    data:
+      - name: backup-routeros
+        comment: Managed by Ansible
+        disabled: false
+        interval: 1d
+        start-time: '05:30:00'
+        on-event: backup-routeros
+        policy: ftp,read,write,policy,test,sensitive
+  no_log: true

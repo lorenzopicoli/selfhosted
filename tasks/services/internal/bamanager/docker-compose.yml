@@ -17,9 +17,22 @@ services:
       - /home/lorenzo/configs/bamanager/backrest/tmp:/tmp
       - /home/lorenzo/configs/bamanager/backrest/config:/sources/bamanager-config:ro
       - /home/lorenzo/configs/bamanager/rclone-admin/rclone.conf:/root/.config/rclone/rclone.conf:ro
+      - /var/lib/selfhosted-backup/uploads:/sources/uploads:ro
       - /var/lib/selfhosted-restore:/restore
     ports:
-      - "192.168.40.20:9898:9898"
+      - "9898:9898"
+
+  sftp:
+    image: atmoz/sftp:debian@sha256:9f233cde678d62a7b2e0fa9f3f20bf401885b1203b2dffc50695f51813ebfb87
+    container_name: backup-sftp
+    restart: unless-stopped
+    environment:
+      SFTP_USERS: "${ROUTEROS_BACKUP_SFTP_USERNAME}:${ROUTEROS_BACKUP_SFTP_PASSWORD}:20000::incoming"
+    volumes:
+      - sftp-ssh:/etc/ssh
+      - /var/lib/selfhosted-backup/uploads:/home
+    ports:
+      - "${ROUTEROS_BACKUP_SFTP_PORT}:22"
 
   restic-gateway:
     image: rclone/rclone:1.75.2
@@ -38,4 +51,7 @@ services:
     volumes:
       - /home/lorenzo/configs/bamanager/rclone-writer:/config:ro
     ports:
-      - "192.168.40.20:8080:8080"
+      - "8080:8080"
+
+volumes:
+  sftp-ssh:

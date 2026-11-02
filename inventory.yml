@@ -82,6 +82,11 @@ homelab:
       ansible_architecture: amd64
       ansible_distribution: debian
 
+routers:
+  hosts:
+    routeros:
+      ansible_host: 192.168.40.1
+
 local_deployable:
   hosts:
     lofinance:

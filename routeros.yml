@@ -1,0 +1,21 @@
+- name: Setup routeros backups
+  hosts:
+    - routeros
+  connection: local
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  vars_files:
+    - env_vars.yml
+  module_defaults:
+    group/community.routeros.api:
+      hostname: "{{ ansible_host }}"
+      username: "{{ ROUTEROS_API_USERNAME }}"
+      password: "{{ ROUTEROS_API_PASSWORD }}"
+      port: "{{ ROUTEROS_API_PORT }}"
+      tls: false
+      encoding: UTF-8
+
+  tasks:
+    - name: Deploy RouterOS backups
+      ansible.builtin.include_tasks: tasks/services/internal/routeros/backup-task.yml
