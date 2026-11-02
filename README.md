@@ -1,26 +1,79 @@
 ## Current services
 
-| Name                                                 | Backup  | Version       | Last update  | Type      | Status  | Notes                                                                                                                                                 |
-| ---------------------------------------------------- | ------- | ------------- | ------------ | --------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Lomnia](https://lorenzomodolo.com/projects/lomnia/) | Not yet | latest        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
-| Vaultwarden                                          | Yes     | 1.37.4-alpine | Nov 1, 2026  | Container | Working |                                                                                                                                                       |
-| Unifi controller                                     | Yes     | 5.1.42        | Nov 2, 2026  | Container | Working |                                                                                                                                                       |
-| Traefik                                              | Not yet | 3.6.1         | Nov 14, 2025 | Container | Working | Has some logs about using deprecated syntax. Should probably take some time to drop this in favor of npm or npm in favour of traefik across the board |
-| Syncthing                                            | Not yet | 2.0.11        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
-| Technitium                                           | Not yet | 15.4.0        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
-| NPM                                                  | Not yet | 2.14.0        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
-| Spotify-Mongo                                        | Not yet | 6.0.5         |              | Container | Working | Can't update because of Raspberry Pi's architecture                                                                                                   |
-| Spotify Server                                       | Not yet | 1.14.0        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
-| Spotify Client                                       | Not yet | 1.14.0        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
-| Forgejo                                              | Yes     | 17.0.1        | Nov 1, 2026  | Container | Working |                                                                                                                                                       |
-| Forgejo Actions Runner                               | No need | 13.2.1        | Nov 2, 2026  | Container | Working | Dedicated CI LXC using an isolated Docker-in-Docker daemon.                                                                                           |
-| Lofinance                                            | No need | main          | Nov 1, 2026  | Container | Working |                                                                                                                                                       |
-| Hoarder                                              | Not yet | 0.31.0        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
-| Dozzle                                               | Not yet | v10.1.2       | Nov 1, 2026  | Container | Working |                                                                                                                                                       |
-| Uptime Kuma                                          | Not yet | 2.2.1         | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
-| Mgob                                                 | Not yet | 2.0.27        | Dec 20, 2024 | Container | Working |                                                                                                                                                       |
-| Owntracks recorder                                   | Yes     | 1.0.4-47      | Nov 2, 2026  | Container | Working |                                                                                                                                                       |
-| Owntracks frontend                                   | Yes     | 2.15.3        | Nov 1, 2026  | Container | Working |                                                                                                                                                       |
+| Name                                                 | Backup     | Version       | Last update  | Type      | Status  | Notes                                                                                                                                                 |
+| ---------------------------------------------------- | ---------- | ------------- | ------------ | --------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Lomnia](https://lorenzomodolo.com/projects/lomnia/) | Not yet    | latest        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
+| Vaultwarden                                          | Yes        | 1.37.4-alpine | Nov 1, 2026  | Container | Working |                                                                                                                                                       |
+| Unifi controller                                     | Yes        | 5.1.42        | Nov 2, 2026  | Container | Working |                                                                                                                                                       |
+| Traefik                                              | Not yet    | 3.6.1         | Nov 14, 2025 | Container | Working | Has some logs about using deprecated syntax. Should probably take some time to drop this in favor of npm or npm in favour of traefik across the board |
+| Syncthing                                            | Not yet    | 2.0.11        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
+| Technitium                                           | Not yet    | 15.4.0        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
+| NPM                                                  | Not yet    | 2.14.0        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
+| Spotify-Mongo                                        | Not yet    | 6.0.5         |              | Container | Working | Can't update because of Raspberry Pi's architecture                                                                                                   |
+| Spotify Server                                       | Not yet    | 1.14.0        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
+| Spotify Client                                       | Not yet    | 1.14.0        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
+| Forgejo                                              | Yes        | 17.0.1        | Nov 1, 2026  | Container | Working |                                                                                                                                                       |
+| Forgejo Actions Runner                               | No need    | 13.2.1        | Nov 2, 2026  | Container | Working |                                                                                                                                                       |
+| Lofinance                                            | No need    | main          | Nov 1, 2026  | Container | Working |                                                                                                                                                       |
+| Hoarder                                              | Not yet    | 0.31.0        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
+| Dozzle                                               | Not yet    | v10.1.2       | Nov 1, 2026  | Container | Working |                                                                                                                                                       |
+| Uptime Kuma                                          | Not yet    | 2.2.1         | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
+| Mgob                                                 | Not yet    | 2.0.27        | Dec 20, 2024 | Container | Working |                                                                                                                                                       |
+| Owntracks recorder                                   | Yes        | 1.0.4-47      | Nov 2, 2026  | Container | Working |                                                                                                                                                       |
+| Owntracks frontend                                   | Yes        | 2.15.3        | Nov 1, 2026  | Container | Working |                                                                                                                                                       |
+| RouterOS                                             | Yes        |               | Nov 2, 2026  | Router    | Working |                                                                                                                                                       |
+| Backrest manager                                     | Yes        |               | Nov 2, 2026  | Container | Working |                                                                                                                                                       |
+| Restic gateway (rclone)                              | No need    |               | Nov 2, 2026  | Container | Working |                                                                                                                                                       |
+| SFTP receiver (atmoz/sftp)                           | Files only |               | Nov 2, 2026  | Container | Working |                                                                                                                                                       |
+
+## Backups
+
+### Backup types
+
+| Type    | How it runs                                                                                                                                      | Storage route                                                                            |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| Agent   | A systemd timer on the service host creates a consistent export, then calls the local Backrest plan. The plan's own backup schedule is disabled. | Local Backrest/Restic agent through the manager's append-only rclone gateway to B2.      |
+| SFTP    | The device's scheduler uploads files to the manager's SFTP receiver. A separate Backrest plan on the manager backs up the receiving directory.   | SFTP to the manager, then directly to B2 through the manager's `b2-admin` rclone remote. |
+| Manager | Backrest schedules a plan for its own configuration directory. No host systemd timer is involved.                                                | Directly to B2 through the manager's `b2-admin` rclone remote.                           |
+
+### Backup schedule and coverage
+
+| Service                   | Type    | Runs on                  | Backup time                                                                                 | Data covered                                                                          |
+| ------------------------- | ------- | ------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Vaultwarden               | Agent   | `confidant`              | Daily at 02:00, America/Toronto                                                             | Consistent SQLite export, Vaultwarden files and settings.                             |
+| Forgejo                   | Agent   | `forgejo`                | Daily at 03:00, America/Toronto                                                             | PostgreSQL dump and Forgejo data. Forgejo is stopped until the backup finishes.       |
+| OwnTracks recorder        | Agent   | `owntracks`              | Daily at 04:00, America/Toronto                                                             | Recorder store and configuration archives. Recording resumes before the upload.       |
+| OwnTracks frontend        | Agent   | `owntracks`              | Same 04:00 OwnTracks run                                                                    | Shares the recorder's backup plan. The frontend container is redeployed from Compose. |
+| UniFi controller          | Agent   | `unifi-controller`       | Daily at 05:00, America/Toronto                                                             | UniFi Network `.unf` export.                                                          |
+| RouterOS                  | SFTP    | Router, then `bamanager` | Upload daily at 05:30 in the router's time zone; Backrest cron `0 6 * * *`, Local, at 06:00 | Dated `.backup` and `.rsc` files under `/sources/uploads/backup-routeros/incoming`.   |
+| Backrest manager settings | Manager | `bamanager`              | Cron `0 4 * * *`, Local; daily at 04:00                                                     | Backrest configuration mounted at `/sources/bamanager-config`.                        |
+
+All systemd calendar timers explicitly use America/Toronto, including the
+Forgejo runner cleanup timer at 04:00. Agent timers add up to five minutes of
+randomized delay and catch up after a missed run when the host starts again.
+Keep the router's time zone aligned so its upload finishes before the 06:00 Backrest run.
+
+### Retention and maintenance
+
+These settings apply to all configured backup repositories and plans. The cron
+schedules use Backrest's Local clock, America/Toronto.
+
+| Operation | Cron, Local  | When                             | Settings                                           |
+| --------- | ------------ | -------------------------------- | -------------------------------------------------- |
+| Prune     | `30 5 1 * *` | First day of each month at 05:30 | Maximum unused after prune: 10%.                   |
+| Check     | `0 7 1 * *`  | First day of each month at 07:00 | Read Data %: 100.                                  |
+| Forget    | `0 5 * * *`  | Daily at 05:00                   | Keep 14 daily, 8 weekly, and 12 monthly snapshots. |
+
+Prune and Check are repository settings. Retention belongs to each plan, with
+Forget scheduled on the repository. Services marked Not yet or No need in the
+services table have no backup plan listed here.
+
+The RouterOS plan backs up the receiving folder without checking upload
+freshness. A successful Backrest run can therefore contain older uploads.
+Forget removes snapshots; it does not remove dated files still present in the
+SFTP directory, which remain included in later snapshots. The manager settings
+plan covers Backrest's configuration, not the whole manager host or the SFTP
+server's SSH host-key volume.
 
 ---
 

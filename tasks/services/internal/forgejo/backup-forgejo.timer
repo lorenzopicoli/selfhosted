@@ -2,7 +2,7 @@
 Description=Nightly Forgejo backup
 
 [Timer]
-OnCalendar=*-*-* 03:00:00
+OnCalendar=*-*-* 03:00:00 America/Toronto
 Persistent=true
 RandomizedDelaySec=5m
 Unit=backup-forgejo.service
