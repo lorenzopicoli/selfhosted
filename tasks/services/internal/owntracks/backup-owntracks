@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+# Prevent a timer and a manual run from backing up at the same time.
+exec 9>/run/lock/backup-owntracks.lock
+flock --nonblock 9 || { echo "OwnTracks backup is already running" >&2; exit 1; }
+
+# Root-only credentials for calling the local Backrest API.
+source /etc/selfhosted-backup/backrest-api.env
+
+# Always address the same Compose project and file Ansible deploys.
+compose=(docker compose --project-name owntracks --file /home/lorenzo/configs/docker-compose.yml)
+export_dir=/var/lib/selfhosted-backup/owntracks
+archive=$export_dir/owntracks-store.tar
+mkdir -p "$export_dir"
+
+container_id=$("${compose[@]}" ps -q owntracks-recorder)
+if [[ -z "$container_id" ]] ||
+   [[ $(docker inspect --format '{{ .State.Running }}' "$container_id" 2>/dev/null || true) != true ]]; then
+  echo "OwnTracks Recorder is not running; refusing to change its state" >&2
+  exit 1
+fi
+
+# Resolve the host path for the Docker volume mounted at /store.
+store_dir=$(docker inspect --format '{{ range .Mounts }}{{ if eq .Destination "/store" }}{{ .Source }}{{ end }}{{ end }}' "$container_id")
+if [[ -z "$store_dir" || ! -d "$store_dir" ]]; then
+  echo "Could not find OwnTracks Recorder's /store volume" >&2
+  exit 1
+fi
+
+tmp=$(mktemp "$export_dir/.owntracks-store.tar.XXXXXX")
+manifest_tmp=$(mktemp "$export_dir/.manifest.XXXXXX")
+recorder_stopped=false
+cleanup() {
+  status=$?
+  trap - EXIT
+  [[ -z "$tmp" ]] || rm -f "$tmp"
+  [[ -z "$manifest_tmp" ]] || rm -f "$manifest_tmp"
+  if [[ $recorder_stopped == true ]] && ! "${compose[@]}" start owntracks-recorder; then
+    echo "Failed to restart OwnTracks Recorder" >&2
+    [[ $status -ne 0 ]] || status=1
+  fi
+  exit "$status"
+}
+trap cleanup EXIT
+
+# Stop only the recorder while reading its plain files and LMDB database. The
+# frontend and Backrest remain running. The previous export is retained until
+# the new archive has been created and validated successfully.
+"${compose[@]}" stop --timeout 60 owntracks-recorder
+recorder_stopped=true
+
+tar --create --file "$tmp" --directory "$store_dir" .
+
+# Resume location recording before validating, checksumming and uploading the
+# immutable snapshot.
+"${compose[@]}" start owntracks-recorder
+recorder_stopped=false
+
+tar --list --file "$tmp" >/dev/null
+chmod 0600 "$tmp"
+mv -f "$tmp" "$archive"
+tmp=
+
+{
+  printf 'created_at=%s\n' "$(date --iso-8601=seconds)"
+  sha256sum "$archive"
+} > "$manifest_tmp"
+chmod 0600 "$manifest_tmp"
+mv -f "$manifest_tmp" "$export_dir/manifest.txt"
+manifest_tmp=
+
+# Trigger the plan named "owntracks". This request returns when backup ends.
+curl --fail --silent --show-error \
+  --user "$BACKREST_API_USER:$BACKREST_API_PASSWORD" \
+  --header 'Content-Type: application/json' \
+  --data '{"value":"owntracks"}' \
+  "$BACKREST_API_URL/v1.Backrest/Backup"

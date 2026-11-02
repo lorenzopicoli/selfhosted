@@ -5,6 +5,8 @@
   vars:
     username: lorenzo
     device_type: normal
+    backup_gateway_username: owntracks
+    backup_gateway_password: "{{ backup_gateway_owntracks_password }}"
   vars_files:
     - env_vars.yml
 
@@ -24,5 +26,6 @@
     - name: Deploy owntracks docker apps
       ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
       loop:
-        - owntracks 
+        - backup-agent
+        - owntracks
         - dozzle-agent

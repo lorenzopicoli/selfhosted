@@ -9,7 +9,7 @@ services:
     ports:
       - 80:80
     volumes:
-      - ./home/lorenzo/configs/owntracks-config.js:/usr/share/nginx/html/config/config.js
+      - ./owntracks-config.js:/usr/share/nginx/html/config/config.js:ro
     environment:
       - SERVER_HOST=owntracks-recorder
       - SERVER_PORT=8083
@@ -23,3 +23,26 @@ services:
       - 8083:8083
     volumes:
       - owntracks-store:/store
+
+  backrest:
+    image: ghcr.io/garethgeorge/backrest:v1.14.1-alpine
+    container_name: backrest
+    hostname: owntracks
+    restart: unless-stopped
+    env_file:
+      - /home/lorenzo/configs/backrest/.env
+    environment:
+      BACKREST_DATA: /data
+      BACKREST_CONFIG: /config/config.json
+      XDG_CACHE_HOME: /cache
+      TMPDIR: /tmp
+      TZ: America/Toronto
+    volumes:
+      - /home/lorenzo/configs/backrest/data:/data
+      - /home/lorenzo/configs/backrest/config:/config
+      - /home/lorenzo/configs/backrest/cache:/cache
+      - /home/lorenzo/configs/backrest/tmp:/tmp
+      - /var/lib/selfhosted-backup/owntracks:/exports/owntracks:ro
+      - /var/lib/selfhosted-restore:/restore
+    ports:
+      - '9898:9898'

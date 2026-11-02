@@ -9,6 +9,7 @@
       - backup_b2_admin_application_key | default('') | length > 0
       - backup_gateway_vaultwarden_password | default('') | length > 0
       - backup_gateway_forgejo_password | default('') | length > 0
+      - backup_gateway_owntracks_password | default('') | length > 0
     fail_msg: Add the B2 and backup gateway variables documented in BACKUPS.md to env_vars.yml.
   no_log: true
 
@@ -95,6 +96,8 @@
       password: "{{ backup_gateway_vaultwarden_password }}"
     - username: forgejo
       password: "{{ backup_gateway_forgejo_password }}"
+    - username: owntracks
+      password: "{{ backup_gateway_owntracks_password }}"
   loop_control:
     label: "{{ item.username }}"
   no_log: true

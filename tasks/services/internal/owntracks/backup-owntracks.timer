@@ -1,0 +1,11 @@
+[Unit]
+Description=Nightly OwnTracks backup
+
+[Timer]
+OnCalendar=*-*-* 04:00:00
+Persistent=true
+RandomizedDelaySec=5m
+Unit=backup-owntracks.service
+
+[Install]
+WantedBy=timers.target
