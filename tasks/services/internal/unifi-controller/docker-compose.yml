@@ -1,28 +1,48 @@
-version: '3.8'
-volumes:
-  unifi-data:
-
+---
 services:
-  unifi_controller:
-    image: lscr.io/linuxserver/unifi-controller:8.0.7
-    container_name: unifi_controller
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Etc/UTC
-    volumes:
-      - unifi-data:/config
-
-    ports:
-      # Unifi web admin port
-      - 8443:8443
-      # Unifi STUN port
-      - 3478:3478/udp
-      # Required for AP discovery
-      - 10001:10001/udp
-      # Required for device communication
-      - 8080:8080
-      # Required for Make controller discoverable on L2 network option
-      - 1900:1900/udp
-      - 6789:6789
+  unifi-os-server:
+    image: git.picco.li/lorenzopicoli/unifi-os-docker:5.1.42-6128bc110a36@sha256:6af1e9ac5689dcf101c093f80125895cbe3db8f8253742c190a4cdaa07271829
+    container_name: unifi-os-server
     restart: unless-stopped
+    cgroup: host
+    cap_add: [NET_RAW, NET_ADMIN]
+    environment:
+      UOS_SYSTEM_IP: 192.168.40.23
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    tmpfs:
+      - /run:exec
+      - /run/lock
+      - /tmp:exec
+      - /var/lib/journal
+      - /var/opt/unifi/tmp:size=64m
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - persistent:/persistent
+      - data:/data
+      - logs:/var/log
+      - srv:/srv
+      - unifi:/var/lib/unifi
+      - mongodb:/var/lib/mongodb
+      - postgresql:/var/lib/postgresql
+      - rabbitmq-ssl:/etc/rabbitmq/ssl
+    ports:
+      # UniFi OS web admin port
+      - '11443:443'
+      # Required for device communication
+      - '8080:8080'
+      # UniFi STUN port
+      - '3478:3478/udp'
+      # Required for device discovery
+      - '10003:10003/udp'
+      # Add hotspot/syslog/speed-test ports only if you use those services.
+
+volumes:
+  persistent:
+  data:
+  logs:
+  srv:
+  unifi:
+  mongodb:
+  postgresql:
+  rabbitmq-ssl:
