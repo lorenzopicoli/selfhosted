@@ -82,5 +82,15 @@ homelab:
       ansible_architecture: amd64
       ansible_distribution: debian
 
+local_deployable:
+  hosts:
+    lofinance:
+      local_deploy_project_name: lofinance
+      local_deploy_project_dir: /home/lorenzo/configs
+      local_deploy_compose_file: docker-compose.yml
+      local_deploy_services:
+        - beanfinance
+      local_deploy_wait_timeout: 120
+
 
 

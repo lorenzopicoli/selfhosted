@@ -1,3 +1,0 @@
-[submodule "ansible/tasks/services/internal/lofinance/project"]
-	path = tasks/services/internal/lofinance/project
-	url = git@github.com:lorenzopicoli/lofinance.git

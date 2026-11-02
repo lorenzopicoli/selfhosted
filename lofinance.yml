@@ -17,6 +17,9 @@
 
     - name: Install docker
       ansible.builtin.include_tasks: tasks/docker.yml
+
+    - name: Configure restricted local deployment endpoint
+      ansible.builtin.include_tasks: tasks/local-deployable.yml
     
     - name: Deploy lofinance docker apps
       ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"

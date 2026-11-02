@@ -31,6 +31,20 @@
 
 Most of the magic happens over /ansible.
 
+### Restricted local application deployments
+
+Application playbooks such as `lofinance.yml` include
+`tasks/local-deployable.yml` to configure deployment from Forgejo Actions. The
+shared public key is forced to run `/usr/local/sbin/local-deploy`; it cannot
+open a shell or forward ports. The command pulls only the configured Compose
+services, waits for readiness, restores their previous images if deployment
+fails, and removes replaced images after a successful deployment.
+
+Store the matching private key once as the user-level Forgejo Actions secret
+`DEPLOY_SSH_KEY`. Private registry credentials are optional for public packages;
+for private packages, add `LOCAL_DEPLOY_REGISTRY_USERNAME` and
+`LOCAL_DEPLOY_REGISTRY_TOKEN` with `read:package` scope to `env_vars.yml`.
+
 My current homelab consists of:
 
 - Hardware:

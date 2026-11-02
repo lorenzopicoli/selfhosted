@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+readonly project_name={{ local_deploy_project_name | quote }}
+readonly project_dir={{ local_deploy_project_dir | quote }}
+readonly compose_file="${project_dir}/{{ local_deploy_compose_file | default('docker-compose.yml') }}"
+readonly wait_timeout={{ local_deploy_wait_timeout | default(120) | int }}
+readonly -a services=({% for service in local_deploy_services %} {{ service | quote }}{% endfor %} )
+
+log() {
+  printf '[local-deploy] %s\n' "$*"
+}
+
+exec 9>"/run/lock/local-deploy-${project_name}.lock"
+if ! flock --nonblock 9; then
+  log "A deployment for ${project_name} is already running."
+  exit 75
+fi
+
+cd "$project_dir"
+
+declare -A previous_image_ids=()
+declare -A previous_image_refs=()
+
+for service in "${services[@]}"; do
+  container_id="$(docker compose --project-name "$project_name" --file "$compose_file" ps --quiet "$service")"
+  if [[ -n "$container_id" ]]; then
+    previous_image_ids["$service"]="$(docker inspect --format '{% raw %}{{.Image}}{% endraw %}' "$container_id")"
+    previous_image_refs["$service"]="$(docker inspect --format '{% raw %}{{.Config.Image}}{% endraw %}' "$container_id")"
+  fi
+done
+
+log "Pulling images for ${project_name}: ${services[*]}"
+docker compose --project-name "$project_name" --file "$compose_file" pull "${services[@]}"
+
+log "Applying ${project_name} and waiting up to ${wait_timeout}s for readiness"
+if ! docker compose \
+  --project-name "$project_name" \
+  --file "$compose_file" \
+  up --detach --no-deps --wait --wait-timeout "$wait_timeout" \
+  "${services[@]}"; then
+  log "Deployment failed; attempting to restore the previous local images."
+  rollback_possible=true
+
+  for service in "${services[@]}"; do
+    old_id="${previous_image_ids[$service]:-}"
+    old_ref="${previous_image_refs[$service]:-}"
+
+    if [[ -z "$old_id" || -z "$old_ref" || "$old_ref" == *@sha256:* ]]; then
+      rollback_possible=false
+      log "No retaggable previous image is available for ${service}."
+      continue
+    fi
+
+    docker image tag "$old_id" "$old_ref"
+  done
+
+  if [[ "$rollback_possible" == true ]]; then
+    if docker compose \
+      --project-name "$project_name" \
+      --file "$compose_file" \
+      up --detach --no-deps --force-recreate --wait --wait-timeout "$wait_timeout" \
+      "${services[@]}"; then
+      log "Previous images restored successfully."
+    else
+      log "Rollback failed; manual intervention is required."
+    fi
+  fi
+
+  exit 1
+fi
+
+declare -A removed_image_ids=()
+for service in "${services[@]}"; do
+  old_id="${previous_image_ids[$service]:-}"
+  [[ -n "$old_id" ]] || continue
+  [[ -z "${removed_image_ids[$old_id]:-}" ]] || continue
+
+  container_id="$(docker compose --project-name "$project_name" --file "$compose_file" ps --quiet "$service")"
+  new_id="$(docker inspect --format '{% raw %}{{.Image}}{% endraw %}' "$container_id")"
+
+  if [[ "$old_id" != "$new_id" ]]; then
+    if docker image rm "$old_id" >/dev/null 2>&1; then
+      log "Removed replaced image ${old_id}."
+    else
+      log "Retained ${old_id}; another container may still be using it."
+    fi
+    removed_image_ids["$old_id"]=1
+  fi
+done
+
+log "Deployment of ${project_name} completed successfully."

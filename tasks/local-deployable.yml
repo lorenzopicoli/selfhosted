@@ -1,0 +1,63 @@
+---
+- name: Validate local deployment configuration
+  ansible.builtin.assert:
+    that:
+      - local_deploy_project_name | default('') | length > 0
+      - local_deploy_project_dir | default('') | length > 0
+      - local_deploy_services | default([]) | length > 0
+    fail_msg: >-
+      local_deploy_project_name, local_deploy_project_dir, and
+      local_deploy_services must be configured for this host.
+
+- name: Install local deployment runtime dependency
+  ansible.builtin.apt:
+    name: util-linux
+    state: present
+    update_cache: true
+
+- name: Create restricted Forgejo deployment user
+  ansible.builtin.user:
+    name: forgejo-deploy
+    comment: Restricted Forgejo Actions deployment user
+    home: /var/lib/forgejo-deploy
+    create_home: true
+    shell: /bin/bash
+    password_lock: true
+    state: present
+
+- name: Install root-owned local deployment command
+  ansible.builtin.template:
+    src: local-deploy.sh.j2
+    dest: /usr/local/sbin/local-deploy
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Allow only the local deployment command through sudo
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/forgejo-local-deploy
+    owner: root
+    group: root
+    mode: '0440'
+    content: |
+      forgejo-deploy ALL=(root) NOPASSWD: /usr/local/sbin/local-deploy
+    validate: /usr/sbin/visudo -cf %s
+
+- name: Authorize the shared Forgejo deployment key with a forced command
+  ansible.posix.authorized_key:
+    user: forgejo-deploy
+    state: present
+    key: "{{ lookup('file', playbook_dir + '/files/forgejo-actions-deploy.pub') }}"
+    key_options: 'restrict,command="sudo -n /usr/local/sbin/local-deploy"'
+    exclusive: true
+
+- name: Log in to the private deployment registry
+  community.docker.docker_login:
+    registry_url: "{{ LOCAL_DEPLOY_REGISTRY | default('git.picco.li') }}"
+    username: "{{ LOCAL_DEPLOY_REGISTRY_USERNAME }}"
+    password: "{{ LOCAL_DEPLOY_REGISTRY_TOKEN }}"
+    reauthorize: true
+  no_log: true
+  when:
+    - LOCAL_DEPLOY_REGISTRY_USERNAME | default('') | length > 0
+    - LOCAL_DEPLOY_REGISTRY_TOKEN | default('') | length > 0

@@ -1,24 +1,11 @@
 ---
 - name: Ensure configs dir exists
-  file:
+  ansible.builtin.file:
     path: /home/lorenzo/configs
     state: directory
-
-- name: Copy docker file with owner and permissions
-  ansible.builtin.copy:
-    src: ./project/Dockerfile
-    dest: /home/lorenzo/configs/Dockerfile
     owner: lorenzo
-    mode: '0644'
-  become: true
-
-- name: Copy Docker build requirements
-  ansible.builtin.copy:
-    src: ./project/requirements.txt
-    dest: /home/lorenzo/configs/requirements.txt
-    owner: lorenzo
-    mode: '0644'
-  become: true
+    group: lorenzo
+    mode: '0750'
 
 - name: Copy docker compose file with owner and permissions
   ansible.builtin.copy:
@@ -29,7 +16,7 @@
   become: true
 
 - name: Copy env var for docker compose
-  copy:
+  ansible.builtin.copy:
     dest: /home/lorenzo/configs/.env
     content: |
       GIT_REPO_URL="{{ LOFINANCE_GIT_REPO }}"
@@ -45,11 +32,14 @@
 - name: Start lofinance container
   community.docker.docker_compose_v2:
     project_name: lofinance
-    build: always
     project_src: '/home/lorenzo/configs'
+    pull: always
+    wait: true
+    wait_timeout: 120
   register: output
 
-- ansible.builtin.debug:
+- name: Show lofinance Compose changes
+  ansible.builtin.debug:
     var: output
 # This assertion isn't working
 # - ansible.builtin.assert:
