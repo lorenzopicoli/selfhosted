@@ -5,8 +5,8 @@
   vars:
     username: lorenzo
     device_type: normal
-    backup_gateway_username: owntracks
-    backup_gateway_password: "{{ backup_gateway_owntracks_password }}"
+    BACKUP_GATEWAY_USERNAME: owntracks
+    BACKUP_GATEWAY_PASSWORD: "{{ BACKUP_GATEWAY_OWNTRACKS_PASSWORD }}"
   vars_files:
     - env_vars.yml
 

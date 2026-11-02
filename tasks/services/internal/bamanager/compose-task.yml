@@ -2,14 +2,15 @@
 - name: Check bamanager variables
   ansible.builtin.assert:
     that:
-      - backup_b2_bucket | default('') | length > 0
-      - backup_b2_writer_key_id | default('') | length > 0
-      - backup_b2_writer_application_key | default('') | length > 0
-      - backup_b2_admin_key_id | default('') | length > 0
-      - backup_b2_admin_application_key | default('') | length > 0
-      - backup_gateway_vaultwarden_password | default('') | length > 0
-      - backup_gateway_forgejo_password | default('') | length > 0
-      - backup_gateway_owntracks_password | default('') | length > 0
+      - BACKUP_B2_BUCKET | default('') | length > 0
+      - BACKUP_B2_WRITER_KEY_ID | default('') | length > 0
+      - BACKUP_B2_WRITER_APPLICATION_KEY | default('') | length > 0
+      - BACKUP_B2_ADMIN_KEY_ID | default('') | length > 0
+      - BACKUP_B2_ADMIN_APPLICATION_KEY | default('') | length > 0
+      - BACKUP_GATEWAY_VAULTWARDEN_PASSWORD | default('') | length > 0
+      - BACKUP_GATEWAY_FORGEJO_PASSWORD | default('') | length > 0
+      - BACKUP_GATEWAY_OWNTRACKS_PASSWORD | default('') | length > 0
+      - BACKUP_GATEWAY_UNIFI_PASSWORD | default('') | length > 0
     fail_msg: Add the B2 and backup gateway variables documented in BACKUPS.md to env_vars.yml.
   no_log: true
 
@@ -53,7 +54,7 @@
     group: root
     mode: '0600'
     content: |
-      BACKUP_B2_BUCKET={{ backup_b2_bucket }}
+      BACKUP_B2_BUCKET={{ BACKUP_B2_BUCKET }}
 
 - name: Write append-only B2 rclone configuration
   ansible.builtin.copy:
@@ -64,8 +65,8 @@
     content: |
       [b2-writer]
       type = b2
-      account = {{ backup_b2_writer_key_id }}
-      key = {{ backup_b2_writer_application_key }}
+      account = {{ BACKUP_B2_WRITER_KEY_ID }}
+      key = {{ BACKUP_B2_WRITER_APPLICATION_KEY }}
   no_log: true
 
 - name: Write administrative B2 rclone configuration
@@ -77,8 +78,8 @@
     content: |
       [b2-admin]
       type = b2
-      account = {{ backup_b2_admin_key_id }}
-      key = {{ backup_b2_admin_application_key }}
+      account = {{ BACKUP_B2_ADMIN_KEY_ID }}
+      key = {{ BACKUP_B2_ADMIN_APPLICATION_KEY }}
       hard_delete = true
   no_log: true
 
@@ -93,11 +94,13 @@
     mode: '0600'
   loop:
     - username: vaultwarden
-      password: "{{ backup_gateway_vaultwarden_password }}"
+      password: "{{ BACKUP_GATEWAY_VAULTWARDEN_PASSWORD }}"
     - username: forgejo
-      password: "{{ backup_gateway_forgejo_password }}"
+      password: "{{ BACKUP_GATEWAY_FORGEJO_PASSWORD }}"
     - username: owntracks
-      password: "{{ backup_gateway_owntracks_password }}"
+      password: "{{ BACKUP_GATEWAY_OWNTRACKS_PASSWORD }}"
+    - username: unifi
+      password: "{{ BACKUP_GATEWAY_UNIFI_PASSWORD }}"
   loop_control:
     label: "{{ item.username }}"
   no_log: true

@@ -2,10 +2,10 @@
 - name: Check backup agent variables
   ansible.builtin.assert:
     that:
-      - backup_gateway_username | default('') | length > 0
-      - backup_gateway_password | default('') | length > 0
-      - backup_backrest_api_user | default('') | length > 0
-      - backup_backrest_api_password | default('') | length > 0
+      - BACKUP_GATEWAY_USERNAME | default('') | length > 0
+      - BACKUP_GATEWAY_PASSWORD | default('') | length > 0
+      - BACKUP_BACKREST_API_USER | default('') | length > 0
+      - BACKUP_BACKREST_API_PASSWORD | default('') | length > 0
     fail_msg: Add the backup gateway and Backrest API credentials to env_vars.yml.
   no_log: true
 
@@ -33,8 +33,8 @@
     group: root
     mode: '0600'
     content: |
-      RESTIC_REST_USERNAME={{ backup_gateway_username | to_json }}
-      RESTIC_REST_PASSWORD={{ backup_gateway_password | to_json }}
+      RESTIC_REST_USERNAME={{ BACKUP_GATEWAY_USERNAME | to_json }}
+      RESTIC_REST_PASSWORD={{ BACKUP_GATEWAY_PASSWORD | to_json }}
   no_log: true
 
 - name: Write local Backrest API credentials
@@ -45,6 +45,6 @@
     mode: '0600'
     content: |
       BACKREST_API_URL=http://127.0.0.1:9898
-      BACKREST_API_USER={{ backup_backrest_api_user | quote }}
-      BACKREST_API_PASSWORD={{ backup_backrest_api_password | quote }}
+      BACKREST_API_USER={{ BACKUP_BACKREST_API_USER | quote }}
+      BACKREST_API_PASSWORD={{ BACKUP_BACKREST_API_PASSWORD | quote }}
   no_log: true

@@ -1,4 +1,37 @@
 ---
+- name: Check UniFi backup API key
+  ansible.builtin.assert:
+    that:
+      - UNIFI_API_KEY | default('') | length > 0
+    fail_msg: Add UNIFI_API_KEY to env_vars.yml.
+  no_log: true
+
+- name: Install UniFi backup tools
+  ansible.builtin.apt:
+    name:
+      - curl
+      - python3
+    state: present
+    update_cache: true
+
+- name: Create UniFi backup export directory
+  ansible.builtin.file:
+    path: /var/lib/selfhosted-backup/unifi
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Write UniFi backup credentials
+  ansible.builtin.copy:
+    dest: /etc/selfhosted-backup/unifi.env
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      UNIFI_API_KEY={{ UNIFI_API_KEY | quote }}
+  no_log: true
+
 - name: Ensure the Docker Compose plugin is installed
   ansible.builtin.apt:
     name: docker-compose-plugin
@@ -27,3 +60,35 @@
     state: present
     wait: true
     wait_timeout: 300
+
+- name: Install UniFi backup scripts
+  ansible.builtin.copy:
+    src: "./{{ item }}"
+    dest: "/usr/local/sbin/{{ item }}"
+    owner: root
+    group: root
+    mode: '0750'
+  loop:
+    - backup-unifi
+    - export-unifi.py
+
+- name: Install UniFi backup systemd units
+  ansible.builtin.copy:
+    src: "./{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - backup-unifi.service
+    - backup-unifi.timer
+
+- name: Reload systemd units
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Enable and start UniFi backup timer
+  ansible.builtin.systemd_service:
+    name: backup-unifi.timer
+    enabled: true
+    state: started

@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+
+exec 9>/run/lock/backup-unifi.lock
+flock --nonblock 9 || { echo "UniFi backup is already running" >&2; exit 1; }
+
+source /etc/selfhosted-backup/backrest-api.env
+source /etc/selfhosted-backup/unifi.env
+export UNIFI_API_KEY
+
+export_dir=/var/lib/selfhosted-backup/unifi
+mkdir -p "$export_dir"
+tmp=$(mktemp "$export_dir/.network.unf.XXXXXX")
+manifest_tmp=$(mktemp "$export_dir/.manifest.XXXXXX")
+cleanup() {
+  [[ -z "$tmp" ]] || rm -f "$tmp"
+  [[ -z "$manifest_tmp" ]] || rm -f "$manifest_tmp"
+}
+trap cleanup EXIT
+
+# UniFi generates the consistent export while Network stays running. Never
+# upload yesterday's export if authentication, generation or download fails.
+python3 /usr/local/sbin/export-unifi.py "$tmp"
+unset UNIFI_API_KEY
+mv -f "$tmp" "$export_dir/network.unf"
+tmp=
+{
+  printf 'created_at=%s\n' "$(date --iso-8601=seconds)"
+  sha256sum "$export_dir/network.unf"
+} > "$manifest_tmp"
+mv -f "$manifest_tmp" "$export_dir/manifest.txt"
+manifest_tmp=
+
+curl --fail --silent --show-error \
+  --output /dev/null \
+  --user "$BACKREST_API_USER:$BACKREST_API_PASSWORD" \
+  --header 'Content-Type: application/json' \
+  --data '{"value":"unifi"}' \
+  "$BACKREST_API_URL/v1.Backrest/Backup"
+
+echo "UniFi backup completed successfully"
