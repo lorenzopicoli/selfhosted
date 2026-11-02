@@ -26,6 +26,3 @@
       loop:
         - hoarder
         - dozzle-agent
-
-    - name: Setup for Active Backup
-      ansible.builtin.include_tasks: tasks/setup-rsync-backup.yml
