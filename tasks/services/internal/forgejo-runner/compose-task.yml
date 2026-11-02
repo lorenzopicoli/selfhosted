@@ -1,0 +1,49 @@
+---
+- name: Check Forgejo runner variables
+  ansible.builtin.assert:
+    that:
+      - FORGEJO_RUNNER_UUID | default('') | length > 0
+      - FORGEJO_RUNNER_TOKEN | default('') | length > 0
+      - forgejo_runner_instance_url | default('') | length > 0
+    fail_msg: Add FORGEJO_RUNNER_UUID and FORGEJO_RUNNER_TOKEN to env_vars.yml.
+  no_log: true
+
+- name: Create Forgejo runner directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: '1000'
+    group: '1000'
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: /home/lorenzo/configs/forgejo-runner, mode: '0750' }
+    - { path: /home/lorenzo/configs/forgejo-runner/data, mode: '0700' }
+    - { path: /home/lorenzo/configs/forgejo-runner/data/.cache, mode: '0770' }
+
+- name: Copy Forgejo runner Compose file
+  ansible.builtin.copy:
+    src: ./docker-compose.yml
+    dest: /home/lorenzo/configs/forgejo-runner/docker-compose.yml
+    owner: lorenzo
+    group: lorenzo
+    mode: '0644'
+
+- name: Write Forgejo runner configuration
+  ansible.builtin.template:
+    src: ./runner-config.yml.j2
+    dest: /home/lorenzo/configs/forgejo-runner/data/runner-config.yml
+    owner: '1000'
+    group: '1000'
+    mode: '0600'
+  no_log: true
+
+- name: Start Forgejo runner containers
+  community.docker.docker_compose_v2:
+    project_name: forgejo-runner
+    project_src: /home/lorenzo/configs/forgejo-runner
+    pull: missing
+  register: forgejo_runner_compose
+
+- name: Show Forgejo runner Compose changes
+  ansible.builtin.debug:
+    var: forgejo_runner_compose.actions

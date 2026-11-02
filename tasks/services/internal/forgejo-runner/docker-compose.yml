@@ -1,0 +1,55 @@
+volumes:
+  docker_certs:
+  docker_data:
+
+services:
+  docker:
+    image: data.forgejo.org/oci/docker:29-dind@sha256:9e79b879b177fbd72c34376a3dd3d91747da5db49e1f560f76aea59561471977
+    container_name: forgejo-runner-docker
+    hostname: docker
+    command:
+      - --dns=192.168.40.7
+    privileged: true
+    restart: unless-stopped
+    environment:
+      DOCKER_TLS_CERTDIR: /certs
+    volumes:
+      - docker_certs:/certs
+      - docker_data:/var/lib/docker
+    healthcheck:
+      test: [CMD, docker, --host, unix:///var/run/docker.sock, info]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    logging:
+      options:
+        max-size: 10m
+        max-file: '3'
+
+  runner:
+    image: data.forgejo.org/forgejo/runner:13.2.1
+    container_name: forgejo-runner
+    user: '1000:1000'
+    restart: unless-stopped
+    depends_on:
+      docker:
+        condition: service_healthy
+    environment:
+      DOCKER_HOST: tcp://docker:2376
+      DOCKER_CERT_PATH: /certs/client
+      DOCKER_TLS_VERIFY: '1'
+    volumes:
+      - ./data:/data
+      - docker_certs:/certs:ro
+    command:
+      - forgejo-runner
+      - --config
+      - /data/runner-config.yml
+      - daemon
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      options:
+        max-size: 10m
+        max-file: '3'

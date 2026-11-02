@@ -19,6 +19,11 @@ services:
       - forgejo_data:/data
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
+    # Forgejo creates short-lived Git credential files here during repository
+    # migrations. Make the directory explicitly writable by the unprivileged
+    # application user and keep those credentials out of persistent storage.
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,mode=1777,size=256m
     ports:
       - '3000:3000'
       - '222:22'

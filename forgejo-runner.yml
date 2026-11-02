@@ -1,0 +1,29 @@
+- name: Setup Forgejo Actions runner on git-runner
+  hosts:
+    - git-runner
+  become: true
+  vars:
+    username: lorenzo
+    device_type: normal
+    forgejo_runner_instance_url: https://git.picco.li/
+  vars_files:
+    - env_vars.yml
+
+  tasks:
+    - name: Update server and install essential packages
+      ansible.builtin.include_tasks: tasks/ssh.yml
+
+    - name: Setup linux firewall
+      ansible.builtin.include_tasks: tasks/firewall.yml
+
+    - name: Install Docker
+      ansible.builtin.include_tasks: tasks/docker.yml
+
+    - name: Install Docker Compose
+      ansible.builtin.include_tasks: tasks/install-compose.yml
+
+    - name: Deploy Forgejo runner services
+      ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
+      loop:
+        - forgejo-runner
+        - dozzle-agent

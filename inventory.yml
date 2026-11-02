@@ -26,6 +26,11 @@ homelab:
       ansible_user: lorenzo
       ansible_architecture: amd64
       ansible_distribution: debian
+    git-runner:
+      ansible_host: 192.168.40.32
+      ansible_user: lorenzo
+      ansible_architecture: amd64
+      ansible_distribution: debian
     lofinance:
       ansible_host: 192.168.40.24
       ansible_user: lorenzo

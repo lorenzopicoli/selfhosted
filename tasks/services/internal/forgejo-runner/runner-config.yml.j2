@@ -1,0 +1,46 @@
+log:
+  level: info
+  job_level: info
+
+runner:
+  capacity: 1
+  envs:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_CERT_PATH: /certs/client
+    DOCKER_TLS_VERIFY: '1'
+  timeout: 3h
+  shutdown_timeout: 10m
+  insecure: false
+  fetch_timeout: 30s
+  fetch_interval: 2s
+  report_interval: 1s
+  labels:
+    - docker:docker://ghcr.io/catthehacker/ubuntu:act-22.04
+    - ubuntu-22.04:docker://ghcr.io/catthehacker/ubuntu:act-22.04
+
+# The runner cache needs an address reachable from the nested job containers.
+# Leave it disabled until a stable LXC address has replaced the placeholder.
+cache:
+  enabled: false
+
+container:
+  # Job containers share the nested Docker daemon's network namespace so they
+  # can use its TLS endpoint without exposing it outside this Compose project.
+  network: host
+  privileged: false
+  options: --volume /certs/client:/certs/client:ro
+  valid_volumes:
+    - /certs/client
+  docker_host: '-'
+  force_pull: true
+  force_rebuild: false
+
+host:
+  workdir_parent:
+
+server:
+  connections:
+    forgejo:
+      url: "{{ forgejo_runner_instance_url }}"
+      uuid: "{{ FORGEJO_RUNNER_UUID }}"
+      token: "{{ FORGEJO_RUNNER_TOKEN }}"
