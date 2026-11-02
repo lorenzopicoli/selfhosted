@@ -2,6 +2,7 @@ name: owntracks
 
 volumes:
   owntracks-store:
+  owntracks-config:
 
 services:
   owntracks-frontend:
@@ -15,7 +16,7 @@ services:
       - SERVER_PORT=8083
     restart: unless-stopped
   owntracks-recorder:
-    image: owntracks/recorder:1.0.1-43
+    image: owntracks/recorder:1.0.4-47
     restart: unless-stopped
     environment:
       - OTR_PORT=0
@@ -23,6 +24,7 @@ services:
       - 8083:8083
     volumes:
       - owntracks-store:/store
+      - owntracks-config:/config
 
   backrest:
     image: ghcr.io/garethgeorge/backrest:v1.14.1-alpine

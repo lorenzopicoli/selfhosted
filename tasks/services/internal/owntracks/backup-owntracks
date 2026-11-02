@@ -11,7 +11,8 @@ source /etc/selfhosted-backup/backrest-api.env
 # Always address the same Compose project and file Ansible deploys.
 compose=(docker compose --project-name owntracks --file /home/lorenzo/configs/docker-compose.yml)
 export_dir=/var/lib/selfhosted-backup/owntracks
-archive=$export_dir/owntracks-store.tar
+store_archive=$export_dir/owntracks-store.tar
+config_archive=$export_dir/owntracks-config.tar
 mkdir -p "$export_dir"
 
 container_id=$("${compose[@]}" ps -q owntracks-recorder)
@@ -21,20 +22,28 @@ if [[ -z "$container_id" ]] ||
   exit 1
 fi
 
-# Resolve the host path for the Docker volume mounted at /store.
+# Resolve the host paths for the Docker volumes mounted in the Recorder.
 store_dir=$(docker inspect --format '{{ range .Mounts }}{{ if eq .Destination "/store" }}{{ .Source }}{{ end }}{{ end }}' "$container_id")
 if [[ -z "$store_dir" || ! -d "$store_dir" ]]; then
   echo "Could not find OwnTracks Recorder's /store volume" >&2
   exit 1
 fi
 
-tmp=$(mktemp "$export_dir/.owntracks-store.tar.XXXXXX")
-manifest_tmp=$(mktemp "$export_dir/.manifest.XXXXXX")
+config_dir=$(docker inspect --format '{{ range .Mounts }}{{ if eq .Destination "/config" }}{{ .Source }}{{ end }}{{ end }}' "$container_id")
+if [[ -z "$config_dir" || ! -d "$config_dir" ]]; then
+  echo "Could not find OwnTracks Recorder's /config volume" >&2
+  exit 1
+fi
+
+store_tmp=
+config_tmp=
+manifest_tmp=
 recorder_stopped=false
 cleanup() {
   status=$?
   trap - EXIT
-  [[ -z "$tmp" ]] || rm -f "$tmp"
+  [[ -z "$store_tmp" ]] || rm -f "$store_tmp"
+  [[ -z "$config_tmp" ]] || rm -f "$config_tmp"
   [[ -z "$manifest_tmp" ]] || rm -f "$manifest_tmp"
   if [[ $recorder_stopped == true ]] && ! "${compose[@]}" start owntracks-recorder; then
     echo "Failed to restart OwnTracks Recorder" >&2
@@ -44,35 +53,47 @@ cleanup() {
 }
 trap cleanup EXIT
 
+store_tmp=$(mktemp "$export_dir/.owntracks-store.tar.XXXXXX")
+config_tmp=$(mktemp "$export_dir/.owntracks-config.tar.XXXXXX")
+manifest_tmp=$(mktemp "$export_dir/.manifest.XXXXXX")
+
 # Stop only the recorder while reading its plain files and LMDB database. The
 # frontend and Backrest remain running. The previous export is retained until
 # the new archive has been created and validated successfully.
 "${compose[@]}" stop --timeout 60 owntracks-recorder
 recorder_stopped=true
 
-tar --create --file "$tmp" --directory "$store_dir" .
+tar --create --file "$store_tmp" --directory "$store_dir" .
+tar --create --file "$config_tmp" --directory "$config_dir" .
 
 # Resume location recording before validating, checksumming and uploading the
 # immutable snapshot.
 "${compose[@]}" start owntracks-recorder
 recorder_stopped=false
 
-tar --list --file "$tmp" >/dev/null
-chmod 0600 "$tmp"
-mv -f "$tmp" "$archive"
-tmp=
+tar --list --file "$store_tmp" >/dev/null
+tar --list --file "$config_tmp" >/dev/null
+chmod 0600 "$store_tmp" "$config_tmp"
+mv -f "$store_tmp" "$store_archive"
+store_tmp=
+mv -f "$config_tmp" "$config_archive"
+config_tmp=
 
 {
   printf 'created_at=%s\n' "$(date --iso-8601=seconds)"
-  sha256sum "$archive"
+  sha256sum "$store_archive" "$config_archive"
 } > "$manifest_tmp"
 chmod 0600 "$manifest_tmp"
 mv -f "$manifest_tmp" "$export_dir/manifest.txt"
 manifest_tmp=
 
-# Trigger the plan named "owntracks". This request returns when backup ends.
+# Trigger the plan named "owntracks". Backrest returns an empty JSON object
+# after the backup finishes, so discard that body and log an unambiguous result.
 curl --fail --silent --show-error \
+  --output /dev/null \
   --user "$BACKREST_API_USER:$BACKREST_API_PASSWORD" \
   --header 'Content-Type: application/json' \
   --data '{"value":"owntracks"}' \
   "$BACKREST_API_URL/v1.Backrest/Backup"
+
+echo "OwnTracks backup completed successfully"

@@ -2,7 +2,9 @@
 Description=Nightly OwnTracks backup
 
 [Timer]
-OnCalendar=*-*-* 04:00:00
+# Keep the backup at 04:00 Montreal time even when the host uses UTC and when
+# daylight-saving time changes.
+OnCalendar=*-*-* 04:00:00 America/Toronto
 Persistent=true
 RandomizedDelaySec=5m
 Unit=backup-owntracks.service
