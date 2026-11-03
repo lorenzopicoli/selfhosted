@@ -64,9 +64,6 @@
 - ansible.builtin.debug:
     var: output
 
-- name: Configure Technitium log rotation
-  ansible.builtin.include_tasks: logging-task.yml
-
 - name: Install Technitium backup scripts
   ansible.builtin.copy:
     src: "./{{ item }}"

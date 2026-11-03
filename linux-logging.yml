@@ -1,0 +1,7 @@
+---
+- name: Limit system journals and enable text log rotation
+  hosts: linux_servers
+  become: true
+  tasks:
+    - name: Configure Linux log retention
+      ansible.builtin.include_tasks: tasks/linux-logging.yml

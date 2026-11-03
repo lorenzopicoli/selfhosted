@@ -42,7 +42,7 @@
       ansible.builtin.assert:
         that:
           - ansible_play_hosts_all | length == 1
-          - target_host not in ['all', '*', 'homelab']
+          - target_host not in ['all', '*', 'linux_servers', 'routers']
           - confirm_debian_major_upgrade | bool
         fail_msg: >-
           This playbook upgrades and reboots exactly one host. Take a verified

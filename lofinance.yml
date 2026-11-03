@@ -10,7 +10,7 @@
 
   tasks:
     - name: Update server and install essential packages
-      ansible.builtin.include_tasks: tasks/ssh.yml
+      ansible.builtin.include_tasks: tasks/linux-setup.yml
 
     - name: Setup linux firewall
       ansible.builtin.include_tasks: tasks/firewall.yml

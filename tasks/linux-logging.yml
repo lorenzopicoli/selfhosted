@@ -1,0 +1,57 @@
+---
+- name: Require systemd for the Linux journal policy
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['service_mgr'] == 'systemd'
+    fail_msg: This logging policy requires systemd-journald.
+
+- name: Install rotation for package-managed text logs
+  ansible.builtin.apt:
+    name: logrotate
+    state: present
+
+- name: Enable the package log rotation timer
+  ansible.builtin.systemd_service:
+    name: logrotate.timer
+    enabled: true
+    state: started
+
+- name: Create the journal configuration directory
+  ansible.builtin.file:
+    path: /etc/systemd/journald.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Limit persistent and temporary system journals
+  ansible.builtin.copy:
+    dest: /etc/systemd/journald.conf.d/90-selfhosted-limits.conf
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      # Managed by the selfhosted Ansible repository.
+      [Journal]
+      SystemMaxUse={{ linux_journal_max_use | default('200M') }}
+      SystemMaxFileSize={{ linux_journal_max_file_size | default('30M') }}
+      RuntimeMaxUse={{ linux_journal_runtime_max_use | default('50M') }}
+      RuntimeMaxFileSize={{ linux_journal_runtime_max_file_size | default('5M') }}
+      Compress=yes
+  register: linux_journal_policy
+
+- name: Apply changed journal limits
+  ansible.builtin.systemd_service:
+    name: systemd-journald
+    state: restarted
+  when: linux_journal_policy.changed
+
+- name: Report system journal usage
+  ansible.builtin.command: journalctl --disk-usage
+  changed_when: false
+  check_mode: false
+  register: linux_journal_usage
+
+- name: Show system journal usage
+  ansible.builtin.debug:
+    msg: "{{ linux_journal_usage.stdout }}"

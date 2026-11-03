@@ -1,5 +1,5 @@
-- name: Reclaim space in all machines
-  hosts: all
+- name: Reclaim unused Docker image space on Linux servers
+  hosts: linux_servers
   strategy: free
   become: true
   vars:

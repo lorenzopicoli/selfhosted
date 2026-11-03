@@ -7,7 +7,7 @@
 | Unifi controller                                     | Yes        | 5.1.42        | Nov 2, 2026  | Container | Working |                                                                                                                                                       |
 | Traefik                                              | Not yet    | 3.6.1         | Nov 14, 2025 | Container | Working | Has some logs about using deprecated syntax. Should probably take some time to drop this in favor of npm or npm in favour of traefik across the board |
 | Syncthing                                            | Not yet    | 2.0.11        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
-| Technitium                                           | Code ready | 15.4.0        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
+| Technitium                                           | Yes        | 15.6.2        | Nov 2, 2026  | Container | Working |                                                                                                                                                       |
 | NPM                                                  | Not yet    | 2.14.0        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
 | Spotify-Mongo                                        | Not yet    | 6.0.5         |              | Container | Working | Can't update because of Raspberry Pi's architecture                                                                                                   |
 | Spotify Server                                       | Not yet    | 1.14.0        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
@@ -93,7 +93,6 @@ Linux hosts use a 300 MiB persistent system journal limit, with individual files
 limited to 30 MiB. Temporary journals in RAM are limited to 50 MiB, with 5 MiB
 files. Journald rotates files and deletes the oldest archived files automatically.
 Active journal files can cause usage to exceed the configured limit slightly.
-Applying a changed policy also rotates and vacuums existing journals immediately.
 These limits cover journald, not Docker logs or every file under `/var/log`.
 Package-managed text logs retain their existing logrotate rules; the shared task
 installs logrotate and enables its timer without replacing those rules.
@@ -115,8 +114,10 @@ Technitium writes new logs to the console. Docker's `local` driver retains three
 100 MiB files with compression, for approximately 300 MiB of log messages.
 Use Dozzle or `docker logs dns-server` to read these logs. Technitium's Logs tab
 and API backup no longer contain new log files; configuration and statistics
-backups continue. Statistics retention is unchanged. See the
-[Technitium setup](tasks/services/internal/technitium/README.md#log-rotation).
+backups continue. Statistics retention is unchanged. For a new installation,
+select `Console` as the logging type in Technitium's Settings > Logging and save.
+Changing that application setting and cleaning up historical logs are manual
+migration steps. Ansible manages the ongoing Docker and journal rotation limits.
 
 ## General info
 
