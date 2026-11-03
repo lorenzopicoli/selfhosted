@@ -2,6 +2,11 @@ services:
   backend:
     image: ghcr.io/lorenzopicoli/lomnia-backend:latest
     container_name: lomnia_backend
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
     pull_policy: always
     ports:
       - '3010:3010'
@@ -15,6 +20,11 @@ services:
   frontend:
     image: ghcr.io/lorenzopicoli/lomnia-frontend:latest
     container_name: lomnia_frontend
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
     pull_policy: always
     ports:
       - '80:80'
@@ -24,6 +34,11 @@ services:
   ingester:
     image: ghcr.io/lorenzopicoli/lomnia-ingester:latest
     container_name: lomnia_ingester
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
     pull_policy: always
     ports:
       - '3030:3030'
@@ -36,6 +51,11 @@ services:
   garage:
     image: dxflrs/garage:v2.1.0
     container_name: garage
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
     ports:
       - '3900:3900'
       - '3901:3901'
@@ -52,6 +72,11 @@ services:
   garageui:
     image: khairul169/garage-webui:1.1.0
     container_name: garage-webui
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
     restart: unless-stopped
     volumes:
       - /home/lorenzo/configs/garage.toml:/etc/garage.toml:ro
@@ -65,6 +90,11 @@ services:
     stdin_open: true
     tty: true
     container_name: rabbitmq
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
     ports:
       # - 5672:5672
       - 15672:15672
@@ -74,6 +104,11 @@ services:
       - /home/lorenzo/configs/.rabbitmq_env
   db:
     image: postgis/postgis:18-3.6
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
     restart: unless-stopped
     shm_size: 1gb
     ports:
