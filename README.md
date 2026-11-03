@@ -7,7 +7,7 @@
 | Unifi controller                                     | Yes        | 5.1.42        | Nov 2, 2026  | Container | Working |                                                                                                                                                       |
 | Traefik                                              | Not yet    | 3.6.1         | Nov 14, 2025 | Container | Working | Has some logs about using deprecated syntax. Should probably take some time to drop this in favor of npm or npm in favour of traefik across the board |
 | Syncthing                                            | Not yet    | 2.0.11        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
-| Technitium                                           | Not yet    | 15.4.0        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
+| Technitium                                           | Code ready | 15.4.0        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
 | NPM                                                  | Not yet    | 2.14.0        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
 | Spotify-Mongo                                        | Not yet    | 6.0.5         |              | Container | Working | Can't update because of Raspberry Pi's architecture                                                                                                   |
 | Spotify Server                                       | Not yet    | 1.14.0        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
@@ -38,15 +38,16 @@
 
 ### Backup schedule and coverage
 
-| Service                   | Type    | Runs on                  | Backup time                                                                                 | Data covered                                                                          |
-| ------------------------- | ------- | ------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Vaultwarden               | Agent   | `confidant`              | Daily at 02:00, America/Toronto                                                             | Consistent SQLite export, Vaultwarden files and settings.                             |
-| Forgejo                   | Agent   | `forgejo`                | Daily at 03:00, America/Toronto                                                             | PostgreSQL dump and Forgejo data. Forgejo is stopped until the backup finishes.       |
-| OwnTracks recorder        | Agent   | `owntracks`              | Daily at 04:00, America/Toronto                                                             | Recorder store and configuration archives. Recording resumes before the upload.       |
-| OwnTracks frontend        | Agent   | `owntracks`              | Same 04:00 OwnTracks run                                                                    | Shares the recorder's backup plan. The frontend container is redeployed from Compose. |
-| UniFi controller          | Agent   | `unifi-controller`       | Daily at 05:00, America/Toronto                                                             | UniFi Network `.unf` export.                                                          |
-| RouterOS                  | SFTP    | Router, then `bamanager` | Upload daily at 05:30 in the router's time zone; Backrest cron `0 6 * * *`, Local, at 06:00 | Dated `.backup` and `.rsc` files under `/sources/uploads/backup-routeros/incoming`.   |
-| Backrest manager settings | Manager | `bamanager`              | Cron `0 4 * * *`, Local; daily at 04:00                                                     | Backrest configuration mounted at `/sources/bamanager-config`.                        |
+| Service                   | Type    | Runs on                  | Backup time                                                                                 | Data covered                                                                              |
+| ------------------------- | ------- | ------------------------ | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Technitium                | Agent   | `pihole`                 | Daily at 01:00, America/Toronto, after setup                                                | Validated API ZIP with settings, zones, apps, DHCP scopes, authentication and statistics. |
+| Vaultwarden               | Agent   | `confidant`              | Daily at 02:00, America/Toronto                                                             | Consistent SQLite export, Vaultwarden files and settings.                                 |
+| Forgejo                   | Agent   | `forgejo`                | Daily at 03:00, America/Toronto                                                             | PostgreSQL dump and Forgejo data. Forgejo is stopped until the backup finishes.           |
+| OwnTracks recorder        | Agent   | `owntracks`              | Daily at 04:00, America/Toronto                                                             | Recorder store and configuration archives. Recording resumes before the upload.           |
+| OwnTracks frontend        | Agent   | `owntracks`              | Same 04:00 OwnTracks run                                                                    | Shares the recorder's backup plan. The frontend container is redeployed from Compose.     |
+| UniFi controller          | Agent   | `unifi-controller`       | Daily at 05:00, America/Toronto                                                             | UniFi Network `.unf` export.                                                              |
+| RouterOS                  | SFTP    | Router, then `bamanager` | Upload daily at 05:30 in the router's time zone; Backrest cron `0 6 * * *`, Local, at 06:00 | Dated `.backup` and `.rsc` files under `/sources/uploads/backup-routeros/incoming`.       |
+| Backrest manager settings | Manager | `bamanager`              | Cron `0 4 * * *`, Local; daily at 04:00                                                     | Backrest configuration mounted at `/sources/bamanager-config`.                            |
 
 All systemd calendar timers explicitly use America/Toronto, including the
 Forgejo runner cleanup timer at 04:00. Agent timers add up to five minutes of
@@ -76,6 +77,46 @@ plan covers Backrest's configuration, not the whole manager host or the SFTP
 server's SSH host-key volume.
 
 ---
+
+## Log retention
+
+The inventory separates `linux_servers` from `routers`. Linux maintenance
+playbooks, including `linux-logging.yml` and `reclaim-space.yml`, target
+`linux_servers`; RouterOS uses `routeros.yml`. Ansible's `all` group includes
+both servers and routers.
+
+Application playbooks include `tasks/linux-setup.yml` for shared package,
+kernel and logging configuration. That task file includes `tasks/ssh.yml`
+for the server account, sudo privileges, SSH keys and login settings.
+
+Linux hosts use a 300 MiB persistent system journal limit, with individual files
+limited to 30 MiB. Temporary journals in RAM are limited to 50 MiB, with 5 MiB
+files. Journald rotates files and deletes the oldest archived files automatically.
+Active journal files can cause usage to exceed the configured limit slightly.
+Applying a changed policy also rotates and vacuums existing journals immediately.
+These limits cover journald, not Docker logs or every file under `/var/log`.
+Package-managed text logs retain their existing logrotate rules; the shared task
+installs logrotate and enables its timer without replacing those rules.
+
+The policy is included in the shared Linux setup. To apply it without deploying
+applications, run from this repository:
+
+```sh
+ansible-playbook -i inventory.yml linux-logging.yml --limit pihole
+# All Linux inventory hosts, excluding RouterOS:
+ansible-playbook -i inventory.yml linux-logging.yml
+```
+
+Inventory variables `linux_journal_max_use`, `linux_journal_max_file_size`,
+`linux_journal_runtime_max_use`, and `linux_journal_runtime_max_file_size` can
+override those defaults per host or group. There is no additional age limit.
+
+Technitium writes new logs to the console. Docker's `local` driver retains three
+100 MiB files with compression, for approximately 300 MiB of log messages.
+Use Dozzle or `docker logs dns-server` to read these logs. Technitium's Logs tab
+and API backup no longer contain new log files; configuration and statistics
+backups continue. Statistics retention is unchanged. See the
+[Technitium setup](tasks/services/internal/technitium/README.md#log-rotation).
 
 ## General info
 

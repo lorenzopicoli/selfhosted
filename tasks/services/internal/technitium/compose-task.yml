@@ -1,5 +1,38 @@
 
 ---
+- name: Check Technitium backup API token
+  ansible.builtin.assert:
+    that:
+      - TECHNITIUM_API_TOKEN | default('') | length > 0
+    fail_msg: Add TECHNITIUM_API_TOKEN to env_vars.yml.
+  no_log: true
+
+- name: Install Technitium backup tools
+  ansible.builtin.apt:
+    name:
+      - curl
+      - python3
+    state: present
+    update_cache: true
+
+- name: Create Technitium backup export directory
+  ansible.builtin.file:
+    path: /var/lib/selfhosted-backup/technitium
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Write Technitium backup credentials
+  ansible.builtin.copy:
+    dest: /etc/selfhosted-backup/technitium.env
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      TECHNITIUM_API_TOKEN={{ TECHNITIUM_API_TOKEN | quote }}
+  no_log: true
+
 - name: Ensure configs dir exists
   file:
     path: /home/lorenzo/configs
@@ -30,3 +63,38 @@
 
 - ansible.builtin.debug:
     var: output
+
+- name: Configure Technitium log rotation
+  ansible.builtin.include_tasks: logging-task.yml
+
+- name: Install Technitium backup scripts
+  ansible.builtin.copy:
+    src: "./{{ item }}"
+    dest: "/usr/local/sbin/{{ item }}"
+    owner: root
+    group: root
+    mode: '0750'
+  loop:
+    - backup-technitium
+    - export-technitium.py
+
+- name: Install Technitium backup systemd units
+  ansible.builtin.copy:
+    src: "./{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - backup-technitium.service
+    - backup-technitium.timer
+
+- name: Reload systemd units
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Enable and start Technitium backup timer
+  ansible.builtin.systemd_service:
+    name: backup-technitium.timer
+    enabled: true
+    state: started

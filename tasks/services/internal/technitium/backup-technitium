@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+
+exec 9>/run/lock/backup-technitium.lock
+flock --nonblock 9 || { echo "Technitium backup is already running" >&2; exit 1; }
+
+source /etc/selfhosted-backup/backrest-api.env
+source /etc/selfhosted-backup/technitium.env
+export TECHNITIUM_API_TOKEN
+
+export_dir=/var/lib/selfhosted-backup/technitium
+mkdir -p "$export_dir"
+tmp=
+manifest_tmp=
+cleanup() {
+  [[ -z "$tmp" ]] || rm -f "$tmp"
+  [[ -z "$manifest_tmp" ]] || rm -f "$manifest_tmp"
+}
+trap cleanup EXIT
+tmp=$(mktemp "$export_dir/.settings.zip.XXXXXX")
+manifest_tmp=$(mktemp "$export_dir/.manifest.XXXXXX")
+
+# Export through the local API while DNS stays running. Only publish and upload
+# a new export after the download and every ZIP member pass validation.
+python3 /usr/local/sbin/export-technitium.py "$tmp"
+unset TECHNITIUM_API_TOKEN
+mv -f "$tmp" "$export_dir/settings.zip"
+tmp=
+{
+  printf 'created_at=%s\n' "$(date --iso-8601=seconds)"
+  sha256sum "$export_dir/settings.zip"
+} > "$manifest_tmp"
+mv -f "$manifest_tmp" "$export_dir/manifest.txt"
+manifest_tmp=
+
+curl --fail --silent --show-error \
+  --output /dev/null \
+  --user "$BACKREST_API_USER:$BACKREST_API_PASSWORD" \
+  --header 'Content-Type: application/json' \
+  --data '{"value":"technitium"}' \
+  "$BACKREST_API_URL/v1.Backrest/Backup"
+
+echo "Technitium backup completed successfully"
