@@ -4,6 +4,23 @@
     path: /home/lorenzo/configs
     state: directory
 
+- name: Install Nginx Proxy Manager backup tools
+  ansible.builtin.apt:
+    name:
+      - curl
+      - sqlite3
+      - tar
+    state: present
+    update_cache: true
+
+- name: Create Nginx Proxy Manager backup export directory
+  ansible.builtin.file:
+    path: /var/lib/selfhosted-backup/npm
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
 - name: Copy compose file with owner and permissions
   ansible.builtin.copy:
     src: ./docker-compose.yml
@@ -28,6 +45,35 @@
 
 - ansible.builtin.debug:
     var: output
+
+- name: Install Nginx Proxy Manager backup script
+  ansible.builtin.copy:
+    src: ./backup-npm
+    dest: /usr/local/sbin/backup-npm
+    owner: root
+    group: root
+    mode: '0750'
+
+- name: Install Nginx Proxy Manager backup systemd units
+  ansible.builtin.copy:
+    src: "./{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - backup-npm.service
+    - backup-npm.timer
+
+- name: Reload systemd units
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Enable and start Nginx Proxy Manager backup timer
+  ansible.builtin.systemd_service:
+    name: backup-npm.timer
+    enabled: true
+    state: started
 
 # This assertion isn't working
 # - ansible.builtin.assert:

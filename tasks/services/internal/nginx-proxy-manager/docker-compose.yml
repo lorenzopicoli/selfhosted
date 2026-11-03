@@ -21,3 +21,26 @@ services:
     volumes:
       - nginx-proxy-manager-data:/data
       - nginx-proxy-manager-le:/etc/letsencrypt
+
+  backrest:
+    image: ghcr.io/garethgeorge/backrest:v1.14.1-alpine
+    container_name: backrest
+    hostname: nginx-proxy-manager
+    restart: unless-stopped
+    env_file:
+      - /home/lorenzo/configs/backrest/.env
+    environment:
+      BACKREST_DATA: /data
+      BACKREST_CONFIG: /config/config.json
+      XDG_CACHE_HOME: /cache
+      TMPDIR: /tmp
+      TZ: America/Toronto
+    volumes:
+      - /home/lorenzo/configs/backrest/data:/data
+      - /home/lorenzo/configs/backrest/config:/config
+      - /home/lorenzo/configs/backrest/cache:/cache
+      - /home/lorenzo/configs/backrest/tmp:/tmp
+      - /var/lib/selfhosted-backup/npm:/exports/npm:ro
+      - /var/lib/selfhosted-restore:/restore
+    ports:
+      - '9898:9898'

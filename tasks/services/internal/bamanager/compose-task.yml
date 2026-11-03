@@ -93,6 +93,8 @@
       password: "{{ BACKUP_GATEWAY_UNIFI_PASSWORD }}"
     - username: technitium
       password: "{{ BACKUP_GATEWAY_TECHNITIUM_PASSWORD }}"
+    - username: npm
+      password: "{{ BACKUP_GATEWAY_NPM_PASSWORD }}"
   loop_control:
     label: "{{ item.username }}"
   no_log: true

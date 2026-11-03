@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+
+exec 9>/run/lock/backup-npm.lock
+flock --nonblock 9 || { echo "Nginx Proxy Manager backup is already running" >&2; exit 1; }
+
+source /etc/selfhosted-backup/backrest-api.env
+
+compose=(docker compose --project-name npm --file /home/lorenzo/configs/docker-compose.yml)
+export_dir=/var/lib/selfhosted-backup/npm
+mkdir -p "$export_dir"
+
+container_id=$("${compose[@]}" ps -q app)
+if [[ -z "$container_id" ]] ||
+   [[ $(docker inspect --format '{{ .State.Running }}' "$container_id" 2>/dev/null || true) != true ]]; then
+  echo "Nginx Proxy Manager is not running; refusing to change its state" >&2
+  exit 1
+fi
+
+data_dir=$(docker inspect --format '{{ range .Mounts }}{{ if eq .Destination "/data" }}{{ .Source }}{{ end }}{{ end }}' "$container_id")
+if [[ -z "$data_dir" || ! -f "$data_dir/database.sqlite" ]]; then
+  echo "Could not find Nginx Proxy Manager's database.sqlite" >&2
+  exit 1
+fi
+
+letsencrypt_dir=$(docker inspect --format '{{ range .Mounts }}{{ if eq .Destination "/etc/letsencrypt" }}{{ .Source }}{{ end }}{{ end }}' "$container_id")
+if [[ -z "$letsencrypt_dir" || ! -d "$letsencrypt_dir" ]]; then
+  echo "Could not find Nginx Proxy Manager's /etc/letsencrypt volume" >&2
+  exit 1
+fi
+
+database_tmp=
+data_tmp=
+letsencrypt_tmp=
+manifest_tmp=
+app_stopped=false
+cleanup() {
+  status=$?
+  trap - EXIT
+  if [[ $app_stopped == true ]] && ! "${compose[@]}" start app; then
+    echo "Failed to restart Nginx Proxy Manager" >&2
+    [[ $status -ne 0 ]] || status=1
+  fi
+  [[ -z "$database_tmp" ]] || rm -f "$database_tmp" "$database_tmp-wal" "$database_tmp-shm"
+  [[ -z "$data_tmp" ]] || rm -f "$data_tmp"
+  [[ -z "$letsencrypt_tmp" ]] || rm -f "$letsencrypt_tmp"
+  [[ -z "$manifest_tmp" ]] || rm -f "$manifest_tmp"
+  exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+database_tmp=$(mktemp "$export_dir/.database.sqlite.XXXXXX")
+data_tmp=$(mktemp "$export_dir/.npm-data.tar.XXXXXX")
+letsencrypt_tmp=$(mktemp "$export_dir/.npm-letsencrypt.tar.XXXXXX")
+manifest_tmp=$(mktemp "$export_dir/.manifest.XXXXXX")
+
+# Stop only NPM so the SQLite database, configuration and certificate files
+# cannot change during the export. Backrest remains running.
+app_stopped=true
+"${compose[@]}" stop --timeout 60 app
+
+# Use the same SQLite backup command as Vaultwarden. The data archive contains
+# the other files; exclude the original database and its journal sidecars.
+sqlite3 "$data_dir/database.sqlite" ".backup '$database_tmp'"
+tar --create --file "$data_tmp" \
+  --exclude='./logs' --exclude='./database.sqlite' --exclude='./database.sqlite-*' \
+  --directory "$data_dir" .
+tar --create --file "$letsencrypt_tmp" --directory "$letsencrypt_dir" .
+
+# Restore proxy traffic before validating and uploading the exports.
+"${compose[@]}" start app
+app_stopped=false
+
+if [[ $(sqlite3 "$database_tmp" 'PRAGMA integrity_check;') != ok ]]; then
+  echo "Nginx Proxy Manager SQLite integrity check failed" >&2
+  exit 1
+fi
+tar --list --file "$data_tmp" >/dev/null
+tar --list --file "$letsencrypt_tmp" >/dev/null
+# Validation can create empty WAL and SHM sidecars for the standalone export.
+rm -f "$database_tmp-wal" "$database_tmp-shm"
+mv -f "$database_tmp" "$export_dir/database.sqlite"
+database_tmp=
+mv -f "$data_tmp" "$export_dir/npm-data.tar"
+data_tmp=
+mv -f "$letsencrypt_tmp" "$export_dir/npm-letsencrypt.tar"
+letsencrypt_tmp=
+
+{
+  printf 'created_at=%s\n' "$(date --iso-8601=seconds)"
+  sha256sum "$export_dir/database.sqlite" "$export_dir/npm-data.tar" "$export_dir/npm-letsencrypt.tar"
+} > "$manifest_tmp"
+mv -f "$manifest_tmp" "$export_dir/manifest.txt"
+manifest_tmp=
+
+curl --fail --silent --show-error \
+  --output /dev/null \
+  --user "$BACKREST_API_USER:$BACKREST_API_PASSWORD" \
+  --header 'Content-Type: application/json' \
+  --data '{"value":"npm"}' \
+  "$BACKREST_API_URL/v1.Backrest/Backup"
+
+echo "Nginx Proxy Manager backup completed successfully"

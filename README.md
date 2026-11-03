@@ -8,7 +8,7 @@
 | Traefik                                              | Not yet    | 3.6.1         | Nov 14, 2025 | Container | Working | Has some logs about using deprecated syntax. Should probably take some time to drop this in favor of npm or npm in favour of traefik across the board |
 | Syncthing                                            | Not yet    | 2.0.11        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
 | Technitium                                           | Yes        | 15.6.2        | Nov 2, 2026  | Container | Working |                                                                                                                                                       |
-| NPM                                                  | Not yet    | 2.14.0        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
+| NPM                                                  | Yes        | 2.14.0        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
 | Spotify-Mongo                                        | Not yet    | 6.0.5         |              | Container | Working | Can't update because of Raspberry Pi's architecture                                                                                                   |
 | Spotify Server                                       | Not yet    | 1.14.0        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
 | Spotify Client                                       | Not yet    | 1.14.0        | Nov 14, 2025 | Container | Working |                                                                                                                                                       |
@@ -46,6 +46,7 @@
 | OwnTracks recorder        | Agent   | `owntracks`              | Daily at 04:00, America/Toronto                                                             | Recorder store and configuration archives. Recording resumes before the upload.           |
 | OwnTracks frontend        | Agent   | `owntracks`              | Same 04:00 OwnTracks run                                                                    | Shares the recorder's backup plan. The frontend container is redeployed from Compose.     |
 | UniFi controller          | Agent   | `unifi-controller`       | Daily at 05:00, America/Toronto                                                             | UniFi Network `.unf` export.                                                              |
+| NPM                       | Agent   | `nginx-proxy-manager`    | Daily at 06:00, America/Toronto, after setup                                                | Validated SQLite export, settings and certificates. NPM stops for the export and restarts before upload. Logs excluded. |
 | RouterOS                  | SFTP    | Router, then `bamanager` | Upload daily at 05:30 in the router's time zone; Backrest cron `0 6 * * *`, Local, at 06:00 | Dated `.backup` and `.rsc` files under `/sources/uploads/backup-routeros/incoming`.       |
 | Backrest manager settings | Manager | `bamanager`              | Cron `0 4 * * *`, Local; daily at 04:00                                                     | Backrest configuration mounted at `/sources/bamanager-config`.                            |
 
@@ -75,6 +76,19 @@ Forget removes snapshots; it does not remove dated files still present in the
 SFTP directory, which remain included in later snapshots. The manager settings
 plan covers Backrest's configuration, not the whole manager host or the SFTP
 server's SSH host-key volume.
+
+NPM setup requires `BACKUP_GATEWAY_NPM_PASSWORD` in `env_vars.yml` and deployment
+of both `bamanager.yml` and `nginx-proxy-manager.yml`. On NPM's Backrest instance
+at `http://192.168.40.14:9898`, create a plan with ID `npm`, source `/exports/npm`,
+and its backup schedule disabled. Use the existing gateway repository pattern
+and retention settings above. The systemd timer creates the export and triggers
+that plan. Like Vaultwarden, NPM uses SQLite's `.backup` command and validates
+the exported database with `PRAGMA integrity_check`. Its data archive excludes
+the original database and SQLite journal sidecars. For recovery, stop NPM and
+restore into empty volumes: extract `npm-data.tar` into `/data`, place the
+exported `database.sqlite` at `/data/database.sqlite`, and extract
+`npm-letsencrypt.tar` into `/etc/letsencrypt`. Preserve ownership, permissions
+and symlinks before starting NPM again.
 
 ---
 

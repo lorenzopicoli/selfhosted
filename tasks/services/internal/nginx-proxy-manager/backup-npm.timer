@@ -1,0 +1,11 @@
+[Unit]
+Description=Nightly Nginx Proxy Manager backup
+
+[Timer]
+OnCalendar=*-*-* 06:00:00 America/Toronto
+Persistent=true
+RandomizedDelaySec=5m
+Unit=backup-npm.service
+
+[Install]
+WantedBy=timers.target
