@@ -1,0 +1,28 @@
+- name: Setup OpenTofu PG database
+  hosts:
+    - opentofu-pg
+  become: true
+  vars:
+    username: lorenzo
+    device_type: normal
+    BACKUP_GATEWAY_USERNAME: opentofu-pg
+    BACKUP_GATEWAY_PASSWORD: "{{ BACKUP_GATEWAY_OPENTOFU_PG_PASSWORD }}"
+  vars_files:
+    - env_vars.yml
+
+  tasks:
+    - name: Update server and install essential packages
+      ansible.builtin.include_tasks: tasks/linux-setup.yml
+
+    - name: Install docker
+      ansible.builtin.include_tasks: tasks/docker.yml
+
+    - name: Install docker compose
+      ansible.builtin.include_tasks: tasks/install-compose.yml
+
+    - name: Deploy OpenTofu PG services
+      ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
+      loop:
+        - backup-agent
+        - opentofu-pg
+        - dozzle-agent
