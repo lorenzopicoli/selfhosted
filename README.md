@@ -2,7 +2,7 @@
 
 | Name                                                 | Backup         | Version       | Last update  | Type      | Status  | Notes                                                                                                                                                 |
 | ---------------------------------------------------- | -------------- | ------------- | ------------ | --------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Lomnia](https://lorenzomodolo.com/projects/lomnia/) | Not yet        | latest        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
+| [Lomnia](https://lorenzomodolo.com/projects/lomnia/) | Yes            | latest        | Mar 22, 2026 | Container | Working |                                                                                                                                                       |
 | Vaultwarden                                          | Yes            | 1.37.4-alpine | Nov 1, 2026  | Container | Working |                                                                                                                                                       |
 | Unifi controller                                     | Yes            | 5.1.42        | Nov 2, 2026  | Container | Working |                                                                                                                                                       |
 | Traefik                                              | Not yet        | 3.6.1         | Nov 14, 2025 | Container | Working | Has some logs about using deprecated syntax. Should probably take some time to drop this in favor of npm or npm in favour of traefik across the board |
@@ -33,17 +33,18 @@
 
 ### Backup schedule and coverage
 
-| Service                   | Type    | Runs on                  | Backup time                                                                                 | Data covered                                                                                                            |
-| ------------------------- | ------- | ------------------------ | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Technitium                | Agent   | `pihole`                 | Daily at 01:00, America/Toronto, after setup                                                | Validated API ZIP with settings, zones, apps, DHCP scopes, authentication and statistics.                               |
-| Vaultwarden               | Agent   | `confidant`              | Daily at 02:00, America/Toronto                                                             | Consistent SQLite export, Vaultwarden files and settings.                                                               |
-| Forgejo                   | Agent   | `forgejo`                | Daily at 03:00, America/Toronto                                                             | PostgreSQL dump and Forgejo data. Forgejo is stopped until the backup finishes.                                         |
-| OwnTracks recorder        | Agent   | `owntracks`              | Daily at 04:00, America/Toronto                                                             | Recorder store and configuration archives. Recording resumes before the upload.                                         |
-| OwnTracks frontend        | Agent   | `owntracks`              | Same 04:00 OwnTracks run                                                                    | Shares the recorder's backup plan. The frontend container is redeployed from Compose.                                   |
-| UniFi controller          | Agent   | `unifi-controller`       | Daily at 05:00, America/Toronto                                                             | UniFi Network `.unf` export.                                                                                            |
-| NPM                       | Agent   | `nginx-proxy-manager`    | Daily at 06:00, America/Toronto, after setup                                                | Validated SQLite export, settings and certificates. NPM stops for the export and restarts before upload. Logs excluded. |
-| RouterOS                  | SFTP    | Router, then `bamanager` | Upload daily at 05:30 in the router's time zone; Backrest cron `0 6 * * *`, Local, at 06:00 | Dated `.backup` and `.rsc` files under `/sources/uploads/backup-routeros/incoming`.                                     |
-| Backrest manager settings | Manager | `bamanager`              | Cron `0 4 * * *`, Local; daily at 04:00                                                     | Backrest configuration mounted at `/sources/bamanager-config`.                                                          |
+| Service                   | Type    | Runs on                  | Backup time                                                                                 | Data covered                                                                                                                               |
+| ------------------------- | ------- | ------------------------ | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Technitium                | Agent   | `pihole`                 | Daily at 01:00, America/Toronto, after setup                                                | Validated API ZIP with settings, zones, apps, DHCP scopes, authentication and statistics.                                                  |
+| Vaultwarden               | Agent   | `confidant`              | Daily at 02:00, America/Toronto                                                             | Consistent SQLite export, Vaultwarden files and settings.                                                                                  |
+| Forgejo                   | Agent   | `forgejo`                | Daily at 03:00, America/Toronto                                                             | PostgreSQL dump and Forgejo data. Forgejo is stopped until the backup finishes.                                                            |
+| OwnTracks recorder        | Agent   | `owntracks`              | Daily at 04:00, America/Toronto                                                             | Recorder store and configuration archives. Recording resumes before the upload.                                                            |
+| OwnTracks frontend        | Agent   | `owntracks`              | Same 04:00 OwnTracks run                                                                    | Shares the recorder's backup plan. The frontend container is redeployed from Compose.                                                      |
+| UniFi controller          | Agent   | `unifi-controller`       | Daily at 05:00, America/Toronto                                                             | UniFi Network `.unf` export.                                                                                                               |
+| NPM                       | Agent   | `nginx-proxy-manager`    | Daily at 06:00, America/Toronto, after setup                                                | Validated SQLite export, settings and certificates. NPM stops for the export and restarts before upload. Logs excluded.                    |
+| Lomnia                    | Agent   | `lomnia`                 | Daily at 08:00, America/Toronto, after setup                                                | Compressed PostgreSQL dump, Garage metadata and objects, ingester state and RabbitMQ data. Writers and storage stop until upload finishes. |
+| RouterOS                  | SFTP    | Router, then `bamanager` | Upload daily at 05:30 in the router's time zone; Backrest cron `0 6 * * *`, Local, at 06:00 | Dated `.backup` and `.rsc` files under `/sources/uploads/backup-routeros/incoming`.                                                        |
+| Backrest manager settings | Manager | `bamanager`              | Cron `0 4 * * *`, Local; daily at 04:00                                                     | Backrest configuration mounted at `/sources/bamanager-config`.                                                                             |
 
 All systemd calendar timers explicitly use America/Toronto, including the
 Forgejo runner cleanup timer at 04:00. Agent timers add up to five minutes of
@@ -84,6 +85,10 @@ restore into empty volumes: extract `npm-data.tar` into `/data`, place the
 exported `database.sqlite` at `/data/database.sqlite`, and extract
 `npm-letsencrypt.tar` into `/etc/letsencrypt`. Preserve ownership, permissions
 and symlinks before starting NPM again.
+
+Lomnia setup requires `BACKUP_GATEWAY_LOMNIA_PASSWORD` in `env_vars.yml` and
+deployment of both `bamanager.yml` and `lomnia.yml`. Configure its Backrest plan
+and restore settings as described in [Lomnia's README](tasks/services/internal/lomnia/README.md).
 
 ---
 

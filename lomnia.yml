@@ -5,6 +5,8 @@
   vars:
     username: lorenzo
     device_type: normal
+    BACKUP_GATEWAY_USERNAME: lomnia
+    BACKUP_GATEWAY_PASSWORD: "{{ BACKUP_GATEWAY_LOMNIA_PASSWORD }}"
   vars_files:
     - env_vars.yml
 
@@ -24,5 +26,6 @@
     - name: Deploy lomnia docker apps
       ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
       loop:
+        - backup-agent
         - lomnia
         - dozzle-agent

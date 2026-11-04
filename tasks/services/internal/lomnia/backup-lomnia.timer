@@ -1,0 +1,11 @@
+[Unit]
+Description=Nightly Lomnia backup
+
+[Timer]
+OnCalendar=*-*-* 08:00:00 America/Toronto
+Persistent=true
+RandomizedDelaySec=5m
+Unit=backup-lomnia.service
+
+[Install]
+WantedBy=timers.target

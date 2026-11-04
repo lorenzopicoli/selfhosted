@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+
+exec 9>/run/lock/backup-lomnia.lock
+flock --nonblock 9 || { echo "Lomnia backup is already running" >&2; exit 1; }
+
+source /etc/selfhosted-backup/backrest-api.env
+
+compose=(docker compose --project-name lomnia --file /home/lorenzo/configs/docker-compose.yml)
+export_dir=/var/lib/selfhosted-backup/lomnia
+mkdir -p "$export_dir"
+
+for service in backend ingester garage rabbitmq db; do
+  container_id=$("${compose[@]}" ps -q "$service")
+  if [[ -z "$container_id" ]] ||
+     [[ $(docker inspect --format '{{ .State.Running }}' "$container_id" 2>/dev/null || true) != true ]]; then
+    echo "Lomnia $service is not running; refusing to change its state" >&2
+    exit 1
+  fi
+done
+
+# RabbitMQ's on-disk backup must be restored with the original hostname.
+rabbitmq_id=$("${compose[@]}" ps -q rabbitmq)
+rabbitmq_hostname=$(docker inspect --format '{{ .Config.Hostname }}' "$rabbitmq_id")
+
+database_tmp=
+manifest_tmp=
+apps_stopped=false
+storage_stopped=false
+cleanup() {
+  status=$?
+  trap - EXIT
+  if [[ $storage_stopped == true ]] && ! "${compose[@]}" start garage rabbitmq; then
+    echo "Failed to restart Lomnia storage services" >&2
+    [[ $status -ne 0 ]] || status=1
+  fi
+  if [[ $apps_stopped == true ]] && ! "${compose[@]}" start backend ingester; then
+    echo "Failed to restart Lomnia applications" >&2
+    [[ $status -ne 0 ]] || status=1
+  fi
+  [[ -z "$database_tmp" ]] || rm -f "$database_tmp"
+  [[ -z "$manifest_tmp" ]] || rm -f "$manifest_tmp"
+  exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+database_tmp=$(mktemp "$export_dir/.database.dump.XXXXXX")
+manifest_tmp=$(mktemp "$export_dir/.manifest.XXXXXX")
+
+# Stop writers first, then storage, so the dump and volume backup cover the
+# same application state. PostgreSQL and Backrest remain running.
+apps_stopped=true
+"${compose[@]}" stop --timeout 60 backend ingester
+storage_stopped=true
+"${compose[@]}" stop --timeout 60 garage rabbitmq
+
+# Match Forgejo's custom-format pg_dump. Compress table data directly into the
+# host export, without an intermediate SQL file or a copy inside the container.
+"${compose[@]}" exec -T db sh -ec \
+  'exec pg_dump --format=custom --compress=gzip:6 --username="$POSTGRES_USER" --dbname="$POSTGRES_DB"' > "$database_tmp"
+# Read and decompress the whole archive without executing SQL or storing it.
+"${compose[@]}" exec -T db pg_restore --file=/dev/null < "$database_tmp"
+
+# Keep the previous export until the replacement has passed validation.
+mv -f "$database_tmp" "$export_dir/database.dump"
+database_tmp=
+{
+  printf 'created_at=%s\n' "$(date --iso-8601=seconds)"
+  printf 'rabbitmq_hostname=%s\n' "$rabbitmq_hostname"
+  sha256sum "$export_dir/database.dump"
+} > "$manifest_tmp"
+mv -f "$manifest_tmp" "$export_dir/manifest.txt"
+manifest_tmp=
+
+# Backrest reads the stopped volumes directly, avoiding local archive copies.
+# Keep writers and storage stopped until the synchronous upload finishes.
+curl --fail --silent --show-error \
+  --output /dev/null \
+  --user "$BACKREST_API_USER:$BACKREST_API_PASSWORD" \
+  --header 'Content-Type: application/json' \
+  --data '{"value":"lomnia"}' \
+  "$BACKREST_API_URL/v1.Backrest/Backup"
+
+echo "Lomnia backup uploaded successfully"

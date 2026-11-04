@@ -4,6 +4,20 @@
     path: /home/lorenzo/configs
     state: directory
 
+- name: Install Lomnia backup tools
+  ansible.builtin.apt:
+    name: curl
+    state: present
+    update_cache: true
+
+- name: Create Lomnia backup export directory
+  ansible.builtin.file:
+    path: /var/lib/selfhosted-backup/lomnia
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
 - name: Copy compose file with owner and permissions
   ansible.builtin.copy:
     src: ./docker-compose.yml
@@ -137,3 +151,32 @@
 
 - ansible.builtin.debug:
     var: output
+
+- name: Install Lomnia backup script
+  ansible.builtin.copy:
+    src: ./backup-lomnia
+    dest: /usr/local/sbin/backup-lomnia
+    owner: root
+    group: root
+    mode: '0750'
+
+- name: Install Lomnia backup systemd units
+  ansible.builtin.copy:
+    src: "./{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - backup-lomnia.service
+    - backup-lomnia.timer
+
+- name: Reload systemd units
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Enable and start Lomnia backup timer
+  ansible.builtin.systemd_service:
+    name: backup-lomnia.timer
+    enabled: true
+    state: started
