@@ -97,6 +97,8 @@
       password: "{{ BACKUP_GATEWAY_NPM_PASSWORD }}"
     - username: lomnia
       password: "{{ BACKUP_GATEWAY_LOMNIA_PASSWORD }}"
+    - username: opentofu-pg
+      password: "{{ BACKUP_GATEWAY_OPENTOFU_PG_PASSWORD }}"
   loop_control:
     label: "{{ item.username }}"
   no_log: true

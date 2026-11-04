@@ -82,6 +82,12 @@ linux_servers:
       ansible_architecture: amd64
       ansible_distribution: debian
 
+    opentofu-pg:
+      ansible_host: 192.168.40.26
+      ansible_user: lorenzo
+      ansible_architecture: amd64
+      ansible_distribution: debian
+
 routers:
   hosts:
     routeros:

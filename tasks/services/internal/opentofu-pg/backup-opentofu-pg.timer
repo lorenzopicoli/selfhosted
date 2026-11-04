@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily OpenTofu PG database backup
+
+[Timer]
+OnCalendar=*-*-* 09:00:00 America/Toronto
+Persistent=true
+RandomizedDelaySec=5m
+Unit=backup-opentofu-pg.service
+
+[Install]
+WantedBy=timers.target

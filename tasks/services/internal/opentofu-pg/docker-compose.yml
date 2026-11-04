@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:18.6
+    restart: unless-stopped
+    env_file:
+      - /home/lorenzo/configs/.env
+    environment:
+      POSTGRES_DB: opentofu-pg
+      POSTGRES_USER: opentofu-pg
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    ports:
+      # PostgreSQL access for OpenTofu clients and the Forgejo runner.
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  backrest:
+    image: ghcr.io/garethgeorge/backrest:v1.14.1-alpine
+    container_name: backrest
+    hostname: opentofu-pg
+    restart: unless-stopped
+    env_file:
+      - /home/lorenzo/configs/backrest/.env
+    environment:
+      BACKREST_DATA: /data
+      BACKREST_CONFIG: /config/config.json
+      XDG_CACHE_HOME: /cache
+      TMPDIR: /tmp
+      TZ: America/Toronto
+    volumes:
+      - /home/lorenzo/configs/backrest/data:/data
+      - /home/lorenzo/configs/backrest/config:/config
+      - /home/lorenzo/configs/backrest/cache:/cache
+      - /home/lorenzo/configs/backrest/tmp:/tmp
+      - /var/lib/selfhosted-backup/opentofu-pg:/exports/opentofu-pg:ro
+      - /var/lib/selfhosted-restore:/restore
+    ports:
+      - '9898:9898'
+
+volumes:
+  postgres-data:

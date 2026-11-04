@@ -1,0 +1,77 @@
+---
+- name: Ensure configs dir exists
+  ansible.builtin.file:
+    path: /home/lorenzo/configs
+    state: directory
+
+- name: Install OpenTofu PG backup tools
+  ansible.builtin.apt:
+    name: curl
+    state: present
+    update_cache: true
+
+- name: Create OpenTofu PG backup export directory
+  ansible.builtin.file:
+    path: /var/lib/selfhosted-backup/opentofu-pg
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Copy OpenTofu PG Compose file
+  ansible.builtin.copy:
+    src: ./docker-compose.yml
+    dest: /home/lorenzo/configs/docker-compose.yml
+    owner: lorenzo
+    mode: '0644'
+
+- name: Write PostgreSQL credentials
+  ansible.builtin.copy:
+    dest: /home/lorenzo/configs/.env
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      POSTGRES_PASSWORD={{ OPENTOFU_PG_DB_PASSWORD | to_json(ensure_ascii=False) | replace('$', '$$') }}
+  no_log: true
+
+- name: Start OpenTofu PG containers
+  community.docker.docker_compose_v2:
+    project_name: opentofu-pg
+    project_src: /home/lorenzo/configs
+    wait: true
+    wait_timeout: 120
+  register: opentofu_state_compose
+
+- name: Show OpenTofu PG Compose changes
+  ansible.builtin.debug:
+    var: opentofu_state_compose.actions
+
+- name: Install OpenTofu PG backup script
+  ansible.builtin.copy:
+    src: ./backup-opentofu-pg
+    dest: /usr/local/sbin/backup-opentofu-pg
+    owner: root
+    group: root
+    mode: '0750'
+
+- name: Install OpenTofu PG backup systemd units
+  ansible.builtin.copy:
+    src: "./{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - backup-opentofu-pg.service
+    - backup-opentofu-pg.timer
+
+- name: Reload systemd units
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Enable and start OpenTofu PG backup timer
+  ansible.builtin.systemd_service:
+    name: backup-opentofu-pg.timer
+    enabled: true
+    state: started

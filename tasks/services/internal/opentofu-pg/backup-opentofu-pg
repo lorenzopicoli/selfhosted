@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+
+exec 9>/run/lock/backup-opentofu-pg.lock
+flock --nonblock 9 || { echo "OpenTofu PG backup is already running" >&2; exit 1; }
+
+source /etc/selfhosted-backup/backrest-api.env
+
+compose=(docker compose --project-name opentofu-pg --file /home/lorenzo/configs/docker-compose.yml)
+export_dir=/var/lib/selfhosted-backup/opentofu-pg
+mkdir -p "$export_dir"
+
+database_tmp=
+manifest_tmp=
+cleanup() {
+  status=$?
+  trap - EXIT
+  [[ -z "$database_tmp" ]] || rm -f "$database_tmp"
+  [[ -z "$manifest_tmp" ]] || rm -f "$manifest_tmp"
+  exit "$status"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+database_tmp=$(mktemp "$export_dir/.database.dump.XXXXXX")
+manifest_tmp=$(mktemp "$export_dir/.manifest.XXXXXX")
+
+# Export a consistent database snapshot while PostgreSQL remains available.
+"${compose[@]}" exec -T db sh -ec \
+  'exec pg_dump --format=custom --compress=gzip:6 --username="$POSTGRES_USER" --dbname="$POSTGRES_DB"' > "$database_tmp"
+# Read and decompress the complete archive without executing its SQL.
+"${compose[@]}" exec -T db pg_restore --file=/dev/null < "$database_tmp"
+
+# Keep the previous export until the replacement passes validation.
+mv -f "$database_tmp" "$export_dir/database.dump"
+database_tmp=
+{
+  printf 'created_at=%s\n' "$(date --iso-8601=seconds)"
+  sha256sum "$export_dir/database.dump"
+} > "$manifest_tmp"
+mv -f "$manifest_tmp" "$export_dir/manifest.txt"
+manifest_tmp=
+
+curl --fail --silent --show-error \
+  --output /dev/null \
+  --user "$BACKREST_API_USER:$BACKREST_API_PASSWORD" \
+  --header 'Content-Type: application/json' \
+  --data '{"value":"opentofu-pg"}' \
+  "$BACKREST_API_URL/v1.Backrest/Backup"
+
+echo "OpenTofu PG backup uploaded successfully"

@@ -1,0 +1,12 @@
+[Unit]
+Description=Create and upload an OpenTofu PG database backup
+Wants=network-online.target
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/backup-opentofu-pg
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=infinity
