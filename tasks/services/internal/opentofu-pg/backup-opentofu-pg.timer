@@ -1,8 +1,8 @@
 [Unit]
-Description=Daily OpenTofu PG database backup
+Description=OpenTofu PG database backup every two hours
 
 [Timer]
-OnCalendar=*-*-* 09:00:00 America/Toronto
+OnCalendar=*-*-* 00/2:00:00 America/Toronto
 Persistent=true
 RandomizedDelaySec=5m
 Unit=backup-opentofu-pg.service
