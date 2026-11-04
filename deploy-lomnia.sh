@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # ---- Hardcoded config ----
-DB_HOST="192.168.40.35"
+DB_HOST="192.168.40.58"
 DB_PORT="5432"
 DB_NAME="lomnia"
 DB_USER="lomnia"

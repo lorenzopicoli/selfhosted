@@ -49,7 +49,7 @@ services:
       - ingester_data:/ingester_data
       - /home/lorenzo/configs/plugins.yaml:/config/plugins.yaml
   garage:
-    image: dxflrs/garage:v2.1.0
+    image: dxflrs/garage:v2.5.0
     container_name: garage
     logging:
       driver: json-file
@@ -86,7 +86,8 @@ services:
       - /home/lorenzo/configs/.garage_ui_env
 
   rabbitmq:
-    image: rabbitmq:4.2.2-management-alpine
+    image: rabbitmq:4.4.0-management-alpine
+    hostname: 194276a57385
     stdin_open: true
     tty: true
     container_name: rabbitmq
@@ -104,6 +105,7 @@ services:
       - /home/lorenzo/configs/.rabbitmq_env
   db:
     image: postgis/postgis:18-3.6
+    pull_policy: always
     logging:
       driver: json-file
       options:
