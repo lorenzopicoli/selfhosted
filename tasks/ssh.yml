@@ -22,7 +22,7 @@
   ansible.posix.authorized_key:
     user: "{{ username }}"
     state: present
-    key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+    key: "{{ lookup('file', playbook_dir + '/files/id_rsa.pub') }}"
 
 # Effectively disables even the user used to do the initial login. Only SSH allowed
 - name: Disable Password Authentication

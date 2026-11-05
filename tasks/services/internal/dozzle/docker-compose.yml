@@ -5,6 +5,7 @@ networks:
 services:
   dozzle:
     image: amir20/dozzle:v10.1.2
+    restart: unless-stopped
     environment:
       DOCKER_HOST: tcp://socketproxy:2375
       # Keep the git-runner address in sync with inventory.yml.
@@ -18,6 +19,7 @@ services:
       - 8080:8080
   socketproxy:
     image: tecnativa/docker-socket-proxy:0.3.0
+    restart: unless-stopped
     privileged: true
     environment:
       CONTAINERS: 1

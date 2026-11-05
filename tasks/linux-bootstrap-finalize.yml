@@ -1,0 +1,11 @@
+---
+- name: Validate SSH settings before restarting
+  ansible.builtin.command: /usr/sbin/sshd -t
+  changed_when: false
+  when: ansible_user == 'root'
+
+- name: Apply SSH settings after initial provisioning
+  ansible.builtin.service:
+    name: ssh
+    state: restarted
+  when: ansible_user == 'root'

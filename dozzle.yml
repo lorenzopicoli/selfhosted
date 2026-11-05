@@ -2,18 +2,20 @@
   hosts:
     - dozzle
   become: true
+  gather_facts: false
   vars:
     username: lorenzo
     device_type: normal
   vars_files:
     - env_vars.yml
 
+  pre_tasks:
+    - name: Prepare Linux server for provisioning
+      ansible.builtin.include_tasks: tasks/linux-bootstrap.yml
+
   tasks:
     - name: Update server and install essential packages
       ansible.builtin.include_tasks: tasks/linux-setup.yml
-
-    - name: Setup linux firewall
-      ansible.builtin.include_tasks: tasks/firewall.yml
 
     - name: Install docker
       ansible.builtin.include_tasks: tasks/docker.yml
@@ -25,5 +27,7 @@
       ansible.builtin.include_tasks: "tasks/services/internal/{{ item }}/compose-task.yml"
       loop:
         - dozzle
-        - dozzle-agent
 
+  post_tasks:
+    - name: Finish initial Linux provisioning
+      ansible.builtin.include_tasks: tasks/linux-bootstrap-finalize.yml

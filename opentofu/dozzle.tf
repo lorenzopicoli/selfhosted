@@ -46,6 +46,9 @@ resource "proxmox_virtual_environment_container" "dozzle" {
   }
   initialization {
     hostname = "dozzle"
+    user_account {
+      keys = [trimspace(file("${path.module}/../files/id_rsa.pub"))]
+    }
     ip_config {
       ipv4 {
         address = "dhcp"
@@ -62,7 +65,7 @@ resource "proxmox_virtual_environment_container" "dozzle" {
     enabled      = true
     firewall     = true
     host_managed = false
-    mac_address  = "BC:24:11:D1:0E:07"
+    mac_address  = routeros_ip_dhcp_server_lease.dozzle.mac_address
     mtu          = 0
     name         = "eth0"
     rate_limit   = 0
@@ -78,6 +81,7 @@ resource "proxmox_virtual_environment_container" "dozzle" {
       timeout_start,
       # To not rebuild the existing LXC
       operating_system[0].template_file_id,
+      initialization[0].user_account,
     ]
   }
 }
@@ -131,14 +135,14 @@ resource "routeros_ip_dhcp_server_lease" "dozzle" {
   allow_dual_stack_queue = null
   always_broadcast       = null
   block_access           = null
-  client_id              = "ff:11:d1:e:7:0:1:0:1:2e:f6:47:17:bc:24:11:d1:e:7"
+  client_id              = ""
   comment                = null
   dhcp_option            = ""
   dhcp_option_set        = null
   disabled               = false
   insert_queue_before    = null
   lease_time             = null
-  mac_address            = "BC:24:11:D1:0E:07"
+  mac_address            = "02:4A:2C:17:FF:8A"
   rate_limit             = null
   server                 = "dhcp-SECURE"
   use_src_mac            = null

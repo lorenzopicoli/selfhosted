@@ -1,0 +1,21 @@
+---
+- name: Install Ansible prerequisites when connecting as root
+  ansible.builtin.raw: |
+    if ! command -v python3 >/dev/null || ! command -v sudo >/dev/null; then
+      apt-get update &&
+      DEBIAN_FRONTEND=noninteractive apt-get install -y python3 sudo &&
+      echo ANSIBLE_PREREQUISITES_INSTALLED
+    fi
+  become: false
+  register: bootstrap_prerequisites
+  changed_when: "'ANSIBLE_PREREQUISITES_INSTALLED' in bootstrap_prerequisites.stdout"
+  when: ansible_user == 'root'
+
+- name: Gather server facts
+  ansible.builtin.setup:
+
+- name: Upgrade packages during initial provisioning
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: safe
+  when: ansible_user == 'root'
