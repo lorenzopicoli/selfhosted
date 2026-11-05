@@ -18,7 +18,7 @@ resource "proxmox_virtual_environment_container" "dozzle" {
   timeout_migrate                      = 1800
   timeout_update                       = 1800
   unprivileged                         = true
-  vm_id                                = null
+  vm_id                                = 102
   console {
     enabled   = true
     tty_count = 2
@@ -69,18 +69,22 @@ resource "proxmox_virtual_environment_container" "dozzle" {
     vlan_id      = 60
   }
   operating_system {
-    template_file_id = ""
+    template_file_id = proxmox_download_file.debian_13_lxc.id
     type             = "debian"
   }
 
   lifecycle {
-    ignore_changes = [timeout_start]
+    ignore_changes = [
+      timeout_start,
+      # To not rebuild the existing LXC
+      operating_system[0].template_file_id,
+    ]
   }
 }
 
 resource "proxmox_virtual_environment_firewall_options" "dozzle" {
   node_name    = "proxmox"
-  container_id = 102
+  container_id = proxmox_virtual_environment_container.dozzle.vm_id
 
   enabled       = true
   dhcp          = true
@@ -95,7 +99,7 @@ resource "proxmox_virtual_environment_firewall_options" "dozzle" {
 }
 
 resource "proxmox_virtual_environment_firewall_rules" "dozzle" {
-  container_id = 102
+  container_id = proxmox_virtual_environment_container.dozzle.vm_id
   node_name    = "proxmox"
   vm_id        = null
   rule {

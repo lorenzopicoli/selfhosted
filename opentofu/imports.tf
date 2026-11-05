@@ -1,4 +1,9 @@
 import {
+  to = proxmox_download_file.debian_13_lxc
+  id = "proxmox/local:vztmpl/debian-13-standard_13.6-1_amd64.tar.zst"
+}
+
+import {
   to = proxmox_virtual_environment_container.dozzle
   id = "proxmox/102"
 }
