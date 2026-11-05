@@ -43,7 +43,7 @@
 | UniFi controller          | Agent   | `unifi-controller`       | Daily at 05:00, America/Toronto                                                             | UniFi Network `.unf` export.                                                                                                               |
 | NPM                       | Agent   | `nginx-proxy-manager`    | Daily at 06:00, America/Toronto, after setup                                                | Validated SQLite export, settings and certificates. NPM stops for the export and restarts before upload. Logs excluded.                    |
 | Lomnia                    | Agent   | `lomnia`                 | Daily at 08:00, America/Toronto, after setup                                                | Compressed PostgreSQL dump, Garage metadata and objects, ingester state and RabbitMQ data. Writers and storage stop until upload finishes. |
-| OpenTofu PG            | Agent   | `opentofu-pg`            | Daily at 09:00, America/Toronto, after setup                                                | Validated PostgreSQL dump of the state database. PostgreSQL remains running.                                                               |
+| OpenTofu PG               | Agent   | `opentofu-pg`            | Every two hours, starting at 00:00 America/Toronto, after setup                              | Validated PostgreSQL dump of the state database. PostgreSQL remains running.                                                               |
 | RouterOS                  | SFTP    | Router, then `bamanager` | Upload daily at 05:30 in the router's time zone; Backrest cron `0 6 * * *`, Local, at 06:00 | Dated `.backup` and `.rsc` files under `/sources/uploads/backup-routeros/incoming`.                                                        |
 | Backrest manager settings | Manager | `bamanager`              | Cron `0 4 * * *`, Local; daily at 04:00                                                     | Backrest configuration mounted at `/sources/bamanager-config`.                                                                             |
 
@@ -90,6 +90,28 @@ and symlinks before starting NPM again.
 Lomnia setup requires `BACKUP_GATEWAY_LOMNIA_PASSWORD` in `env_vars.yml` and
 deployment of both `bamanager.yml` and `lomnia.yml`. Configure its Backrest plan
 and restore settings as described in [Lomnia's README](tasks/services/internal/lomnia/README.md).
+
+OpenTofu PG setup uses `opentofu-pg.yml` and an `opentofu-pg` host in
+the Linux inventory. Set `OPENTOFU_PG_DB_PASSWORD` and
+`BACKUP_GATEWAY_OPENTOFU_PG_PASSWORD` in `env_vars.yml`, then deploy both
+`bamanager.yml` and `opentofu-pg.yml`. PostgreSQL listens on port 5432 with
+database and user `opentofu-pg`; manage access through Proxmox's firewall.
+The PostgreSQL image initializes the password only when its data volume is
+empty. Editing the environment file does not rotate an existing password.
+
+On Backrest at `http://192.168.40.26:9898`, configure the gateway
+repository and a plan with ID `opentofu-pg`, source
+`/exports/opentofu-pg`, and its backup schedule disabled. Use the retention
+settings above. The host timer exports the database and triggers this plan.
+Only the dump and its checksum manifest are backed up, not the live database
+volume. Restore into a freshly initialized database with the same role by
+passing `database.dump` to `pg_restore --exit-on-error --username=opentofu-pg
+--dbname=opentofu-pg` inside the database container while OpenTofu clients and CI
+are idle. For this plan, also retain the last 12 snapshots alongside the shared
+14 daily, 8 weekly and 12 monthly counts. Changes after a scheduled backup are
+not included until the next backup; run
+`sudo systemctl start backup-opentofu-pg.service` after important applies
+when an immediate backup is needed.
 
 ---
 

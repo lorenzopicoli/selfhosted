@@ -1,1 +1,9 @@
 env_vars.yml
+
+opentofu/.terraform/
+opentofu/terraform.tfstate*
+opentofu/.terraform.tfstate.lock.info
+opentofu/*.tfplan
+opentofu/*.tfvars
+opentofu/*.tfvars.json
+opentofu/crash*.log
